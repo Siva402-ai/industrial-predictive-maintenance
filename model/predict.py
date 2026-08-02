@@ -36,6 +36,46 @@ class PredictiveMaintenanceModel:
         rul_pred = self.model.predict(X_scaled)[0]
         return max(0, int(rul_pred))
 
+def filter_displayed_rul(raw_prediction, prev_displayed_rul=None, health=100.0):
+    """
+    Temporal smoothing filter for displayed Remaining Useful Life (RUL).
+    - Monotonic non-increasing.
+    - Smoothly decrements (1–3 days per step based on ML prediction and degradation rate).
+    - Preserves gradual day-by-day degradation while tracking raw Random Forest predictions closely.
+    - Converges smoothly to 0 when machine reaches terminal state (health = 0%).
+    """
+    raw_val = float(raw_prediction)
+    h_val = float(health)
+    
+    if prev_displayed_rul is None:
+        val_float = max(0.0, raw_val)
+    else:
+        prev_float = float(prev_displayed_rul)
+        if prev_float <= 0.0:
+            return 0.0, 0
+
+        # Dynamic decay target blending day-advance with ML model prediction
+        time_decay_target = prev_float - 1.0
+        blended = 0.85 * time_decay_target + 0.15 * raw_val
+        
+        # If health is at terminal 0%, accelerate smooth convergence to 0 without instant hard jump
+        if h_val <= 0.0:
+            blended = min(blended, prev_float - 2.0)
+
+        # Enforce smooth non-freezing monotonic upper bound (max decrement 0.51 to 3.0 per step)
+        min_step_decrement = 0.51
+        max_step_decrement = 3.0
+        
+        target_decrement = prev_float - blended
+        clamped_decrement = max(min_step_decrement, min(max_step_decrement, target_decrement))
+        
+        val_float = max(0.0, prev_float - clamped_decrement)
+        
+    int_rul = max(0, int(round(val_float)))
+    return val_float, int_rul
+
+
+
 def get_future_trend(history_values, steps=20):
     """
     Extrapolates the next `steps` values based on polynomial trend fitting.

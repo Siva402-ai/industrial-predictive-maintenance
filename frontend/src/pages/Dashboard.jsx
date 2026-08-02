@@ -8,8 +8,27 @@ import SensorTable from '../components/SensorTable';
 
 const Dashboard = ({ currentData, historyData, logs }) => {
   const health = currentData?.machine_health ?? 100;
-  const statusColor =
-    health >= 80 ? '#22C55E' : health >= 60 ? '#2563EB' : health >= 40 ? '#F59E0B' : '#EF4444';
+  const statusStr = currentData?.machine_status || 'Healthy';
+
+  const getGaugeColor = (s) => {
+    switch (s) {
+      case 'Healthy':
+        return '#22C55E';
+      case 'Slight Wear':
+        return '#2563EB';
+      case 'Moderate Wear':
+        return '#F59E0B';
+      case 'Warning':
+        return '#D97706';
+      case 'Critical':
+        return '#EF4444';
+      default:
+        return '#22C55E';
+    }
+  };
+
+  const statusColor = getGaugeColor(statusStr);
+
 
   return (
     <div className="space-y-4">

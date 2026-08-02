@@ -26,7 +26,7 @@ import datetime
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from simulator import RealTimeMachineSimulator
-from predict import PredictiveMaintenanceModel, get_future_trend
+from predict import PredictiveMaintenanceModel, get_future_trend, filter_displayed_rul
 from maintenance_engine import get_maintenance_recommendation
 from preprocessing import load_data, preprocess_data
 from utils import get_status_color
@@ -43,7 +43,8 @@ app.add_middleware(
 )
 
 model_service = PredictiveMaintenanceModel()
-sim_engine = RealTimeMachineSimulator(max_lifespan_days=365, degradation_factor=1.8, degradation_start_day=150)
+sim_engine = RealTimeMachineSimulator(max_lifespan_days=250, degradation_factor=1.8, degradation_start_day=100)
+
 
 # Load CSV dataset exclusively for model evaluation metrics (/api/model)
 df_eval = load_data()
@@ -54,12 +55,26 @@ class SimulationState:
         self.auto_play = False
         self.simulation_speed = 1.0
         self.history_records = []
-        self.prev_smoothed_rul = None
+        self.prev_displayed_rul = None
+        self.prev_status_level = 0
+
+    def reset(self):
+        self.auto_play = False
+        self.history_records = []
+        self.prev_displayed_rul = None
+        self.prev_status_level = 0
 
 sim_state = SimulationState()
 
+def reset_simulation_state():
+    """Completely resets simulator engine, history buffers, predictions, and status state to a fresh Day 1 machine."""
+    sim_engine.reset()
+    sim_state.reset()
+    generate_next_telemetry_step()
+
+
 def generate_next_telemetry_step():
-    """Advances the real-time machine simulator by 1 tick, computes RUL prediction, applies EMA smoothing, and passes to Maintenance Decision Engine."""
+    """Advances the real-time machine simulator by 1 tick, computes RUL prediction, applies EMA smoothing + monotonic filtering, and passes to Maintenance Decision Engine."""
     record = sim_engine.step()
     temp = float(record.get("Temperature", 35.0))
     vib = float(record.get("Vibration", 0.2))
@@ -67,18 +82,36 @@ def generate_next_telemetry_step():
     health = float(record.get("Machine_Health", 100.0))
     active_event = str(record.get("Active_Event", "None"))
     
+    # Calculate sensor anomaly severity score relative to baseline
+    t_dev = max(0.0, (temp - getattr(sim_engine, 'temp_base', 62.0)) / 15.0)
+    v_dev = max(0.0, (vib - getattr(sim_engine, 'vib_base', 0.20)) / 4.0)
+    c_dev = max(0.0, (curr - getattr(sim_engine, 'curr_base', 8.0)) / 7.2)
+    sensor_anomaly_score = 0.40 * t_dev + 0.40 * v_dev + 0.20 * c_dev
+
     raw_pred_rul = model_service.predict_rul(temp, vib, curr)
-    if sim_state.prev_smoothed_rul is None:
-        smoothed_rul = float(raw_pred_rul)
-    else:
-        # EMA temporal smoothing (alpha = 0.35) for stable RUL progression without oscillating
-        smoothed_rul = 0.35 * float(raw_pred_rul) + 0.65 * sim_state.prev_smoothed_rul
-    sim_state.prev_smoothed_rul = smoothed_rul
-    pred_rul = max(0, int(round(smoothed_rul)))
     
-    maint_info = get_maintenance_recommendation(pred_rul, health, active_event)
+    # Apply temporal smoothing filter for displayed RUL (smooth monotonic decay, terminal 0 convergence)
+    val_float, displayed_rul = filter_displayed_rul(
+        raw_prediction=raw_pred_rul,
+        prev_displayed_rul=sim_state.prev_displayed_rul,
+        health=health
+    )
+    sim_state.prev_displayed_rul = val_float
     
-    record["Predicted_RUL"] = pred_rul
+    # Single source of truth: pass to multi-factor decision engine
+    maint_info = get_maintenance_recommendation(
+        predicted_rul=displayed_rul,
+        machine_health=health,
+        active_event=active_event,
+        max_lifespan_days=sim_engine.max_lifespan_days,
+        prev_status_level=sim_state.prev_status_level,
+        sensor_anomaly_score=sensor_anomaly_score
+    )
+    sim_state.prev_status_level = maint_info.get("status_level", 0)
+
+    
+    record["Raw_Predicted_RUL"] = raw_pred_rul
+    record["Predicted_RUL"] = displayed_rul
     record["Machine_Status"] = maint_info["maintenance_status"]
     record["Recommended_Action"] = maint_info["recommended_action"]
     record["Inspection_Priority"] = maint_info["inspection_priority"]
@@ -91,6 +124,7 @@ def generate_next_telemetry_step():
         sim_state.history_records.pop(0)
         
     return record
+
 
 # Generate initial baseline step on server startup
 if not sim_state.history_records:
@@ -145,11 +179,8 @@ def get_current():
         vib = float(row.get("Vibration", 0.2))
         curr = float(row.get("Motor_Current", 8.0))
         health = float(row.get("Machine_Health", 100.0))
-        
-        predicted_rul = int(row.get("Predicted_RUL", model_service.predict_rul(temp, vib, curr)))
-        stage_text, stage_color = get_status_color(health)
-        
-        alert_status = "Healthy" if health >= 80 else ("Slight Wear" if health >= 60 else ("Moderate Wear" if health >= 40 else "Critical"))
+        predicted_rul = int(row.get("Predicted_RUL", 0))
+        machine_status = str(row.get("Machine_Status", "Healthy"))
         
         return {
             "current_idx": len(sim_state.history_records) - 1,
@@ -159,10 +190,10 @@ def get_current():
             "vibration": round(vib, 2),
             "motor_current": round(curr, 2),
             "machine_health": round(health, 1),
-            "machine_status": stage_text,
+            "machine_status": machine_status,
             "actual_rul_days": int(row.get("Remaining_Useful_Life_Days", 0)),
             "predicted_rul_days": predicted_rul,
-            "alert_status": alert_status,
+            "alert_status": machine_status,
             "auto_play": sim_state.auto_play,
             "simulation_speed": sim_state.simulation_speed,
             "active_event": row.get("Active_Event", "None")
@@ -214,18 +245,15 @@ def get_maintenance_status():
         vib = float(row.get("Vibration", 0.2))
         curr = float(row.get("Motor_Current", 8.0))
         health = float(row.get("Machine_Health", 100.0))
-        pred_rul = int(row.get("Predicted_RUL", model_service.predict_rul(temp, vib, curr)))
-        active_event = str(row.get("Active_Event", "None"))
-        
-        maint_info = get_maintenance_recommendation(pred_rul, health, active_event)
+        pred_rul = int(row.get("Predicted_RUL", 0))
         
         return {
             "predicted_rul_days": pred_rul,
             "machine_health": round(health, 1),
-            "maintenance_status": maint_info["maintenance_status"],
-            "recommended_action": maint_info["recommended_action"],
-            "inspection_priority": maint_info["inspection_priority"],
-            "next_inspection_window": maint_info["next_inspection_window"],
+            "maintenance_status": str(row.get("Machine_Status", "Healthy")),
+            "recommended_action": str(row.get("Recommended_Action", "Continue Normal Operation")),
+            "inspection_priority": str(row.get("Inspection_Priority", "Low")),
+            "next_inspection_window": str(row.get("Next_Inspection_Window", "Routine inspection within 90–120 days")),
             "timestamp": str(row.get("Timestamp", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))),
             "temperature": round(temp, 2),
             "vibration": round(vib, 2),
@@ -234,6 +262,7 @@ def get_maintenance_status():
     except Exception as e:
         logger.error(f"Error in GET /api/maintenance: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to fetch maintenance status: {str(e)}")
+
 
 class PredictRequest(BaseModel):
     temperature: float
@@ -332,17 +361,20 @@ class ControlAction(BaseModel):
 def control_simulation(action: ControlAction):
     try:
         if action.action == "start":
+            # Auto-reset if user hits start on a failed/terminal machine (0% Health)
+            is_terminal = sim_engine.health <= 0.0 or (sim_state.history_records and sim_state.history_records[-1].get("Machine_Health", 100.0) <= 0.0)
+            if is_terminal:
+                reset_simulation_state()
             sim_state.auto_play = True
         elif action.action == "pause":
             sim_state.auto_play = False
         elif action.action == "next":
-            generate_next_telemetry_step()
+            if sim_engine.health <= 0.0:
+                reset_simulation_state()
+            else:
+                generate_next_telemetry_step()
         elif action.action == "reset":
-            sim_engine.reset()
-            sim_state.history_records = []
-            sim_state.prev_smoothed_rul = None
-            generate_next_telemetry_step()
-            sim_state.auto_play = False
+            reset_simulation_state()
         elif action.action == "set_speed":
             sim_state.simulation_speed = action.speed
                 
@@ -351,6 +383,7 @@ def control_simulation(action: ControlAction):
             "auto_play": sim_state.auto_play,
             "simulation_speed": sim_state.simulation_speed
         }
+
     except Exception as e:
         logger.error(f"Error in POST /api/control: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to process control action: {str(e)}")

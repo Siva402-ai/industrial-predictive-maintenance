@@ -9,10 +9,16 @@ const Evaluation = ({ modelData }) => {
           <h1 className="text-base font-bold text-gray-900">Machine Learning Model Diagnostics</h1>
           <p className="text-xs text-gray-500">Model performance, accuracy metrics, and error distribution</p>
         </div>
+        {modelData?.isFallback && (
+          <span className="px-2.5 py-1 text-xs font-semibold text-amber-800 bg-amber-100 border border-amber-300 rounded-md">
+            ⚠️ Model metrics endpoint unavailable (Showing fallback estimates)
+          </span>
+        )}
       </div>
       <ModelEvaluation modelData={modelData} />
     </div>
   );
 };
+
 
 export default Evaluation;
