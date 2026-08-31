@@ -47,7 +47,6 @@ venv.bak/
 # Node / React / Vite
 node_modules/
 **/node_modules/
-**/dist/
 **/dist-ssr/
 *.local
 npm-debug.log*
@@ -55,7 +54,7 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Machine Learning Model Binaries (large files)
+# Machine Learning Model Binaries (large files > 100MB)
 *.pkl
 *.h5
 *.joblib
