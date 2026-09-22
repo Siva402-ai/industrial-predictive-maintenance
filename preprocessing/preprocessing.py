@@ -17,7 +17,16 @@ def preprocess_data(df, is_training=True):
     df.ffill(inplace=True)
     
     # Feature columns
-    feature_cols = ["Temperature", "Vibration", "Motor_Current"]
+    feature_cols = [
+        "Temperature",
+        "Vibration",
+        "Motor_Current",
+        "Pressure",
+        "RPM",
+        "Flow_Rate",
+        "Oil_Temperature",
+        "Power_Consumption"
+    ]
     
     # Resolve model directory
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

@@ -69,9 +69,14 @@ const LiveChart = ({ historyData }) => {
   const currentRangeRef = useRef(null);
 
   const metricConfigs = {
-    Temperature: { label: 'Temperature (°C)', key: 'temperature_trend', color: '#2563EB', unit: '°C', minClamp: 55, maxClamp: 85, minSpan: 6, type: 'temperature', dtick: 2, minorDtick: 0.5 },
+    Temperature: { label: 'Operating Temp (°C)', key: 'temperature_trend', color: '#2563EB', unit: '°C', minClamp: 55, maxClamp: 85, minSpan: 6, type: 'temperature', dtick: 2, minorDtick: 0.5 },
     Vibration: { label: 'Vibration RMS (mm/s)', key: 'vibration_trend', color: '#2563EB', unit: 'mm/s', minClamp: 0, maxClamp: 6, minSpan: 1, type: 'vibration', dtick: 0.5, minorDtick: 0.1 },
     Motor_Current: { label: 'Motor Current (A)', key: 'motor_current_trend', color: '#2563EB', unit: 'A', minClamp: 5, maxClamp: 25, minSpan: 3, type: 'current', dtick: 2, minorDtick: 0.5 },
+    Pressure: { label: 'Operating Pressure (PSI)', key: 'pressure_trend', color: '#2563EB', unit: 'PSI', minClamp: 30, maxClamp: 95, minSpan: 10, type: 'pressure', dtick: 10, minorDtick: 2 },
+    RPM: { label: 'Shaft Speed (RPM)', key: 'rpm_trend', color: '#2563EB', unit: 'RPM', minClamp: 1200, maxClamp: 2100, minSpan: 100, type: 'rpm', dtick: 100, minorDtick: 25 },
+    Flow_Rate: { label: 'Fluid Flow Rate (L/min)', key: 'flow_rate_trend', color: '#2563EB', unit: 'L/min', minClamp: 20, maxClamp: 80, minSpan: 10, type: 'flow', dtick: 10, minorDtick: 2 },
+    Oil_Temperature: { label: 'Lube Oil Temp (°C)', key: 'oil_temperature_trend', color: '#2563EB', unit: '°C', minClamp: 40, maxClamp: 85, minSpan: 6, type: 'temperature', dtick: 2, minorDtick: 0.5 },
+    Power_Consumption: { label: 'Power Demand (kW)', key: 'power_consumption_trend', color: '#2563EB', unit: 'kW', minClamp: 15, maxClamp: 45, minSpan: 5, type: 'power', dtick: 5, minorDtick: 1 },
   };
 
   const config = metricConfigs[selectedMetric] || metricConfigs.Temperature;
@@ -149,7 +154,7 @@ const LiveChart = ({ historyData }) => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-200 mb-2 gap-2">
         <div>
           <h2 className="text-sm font-bold text-gray-900">Live Sensor Stream & Predictive Projection</h2>
-          <p className="text-xs text-gray-500">Real-time signal analysis across digital twin lifecycle</p>
+          <p className="text-xs text-gray-500">Real-time signal analysis across digital twin lifecycle (8 Telemetry Parameters)</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -185,9 +190,14 @@ const LiveChart = ({ historyData }) => {
               }}
               className="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-3 py-1.5 font-medium cursor-pointer"
             >
-              <option value="Temperature">Temperature (°C)</option>
+              <option value="Temperature">Operating Temp (°C)</option>
+              <option value="Oil_Temperature">Lube Oil Temp (°C)</option>
               <option value="Vibration">Vibration RMS (mm/s)</option>
+              <option value="RPM">Shaft Speed (RPM)</option>
+              <option value="Pressure">Pressure (PSI)</option>
+              <option value="Flow_Rate">Flow Rate (L/min)</option>
               <option value="Motor_Current">Motor Current (A)</option>
+              <option value="Power_Consumption">Power Demand (kW)</option>
             </select>
           </div>
         </div>

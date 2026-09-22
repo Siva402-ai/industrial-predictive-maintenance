@@ -1,0 +1,176 @@
+{
+  "experiment_name": "Controlled 8-Feature XGBoost Regressor Experiment",
+  "timestamp": "2026-09-22 11:14:53",
+  "production_model": "Random Forest Regressor (8 Features)",
+  "feature_count": 8,
+  "features": [
+    "Temperature",
+    "Vibration",
+    "Motor_Current",
+    "Pressure",
+    "RPM",
+    "Flow_Rate",
+    "Oil_Temperature",
+    "Power_Consumption"
+  ],
+  "dataset_size": 91250,
+  "train_size": 73000,
+  "test_size": 18250,
+  "baseline_3feature": {
+    "r2_score": 0.8548,
+    "mae": 29.39,
+    "rmse": 40.52
+  },
+  "random_forest": {
+    "r2_score": 0.8969,
+    "mae": 24.46,
+    "rmse": 34.15,
+    "feature_importance": [
+      {
+        "feature": "Temperature",
+        "importance": 0.0154
+      },
+      {
+        "feature": "Vibration",
+        "importance": 0.1677
+      },
+      {
+        "feature": "Motor_Current",
+        "importance": 0.7398
+      },
+      {
+        "feature": "Pressure",
+        "importance": 0.0129
+      },
+      {
+        "feature": "RPM",
+        "importance": 0.017
+      },
+      {
+        "feature": "Flow_Rate",
+        "importance": 0.0165
+      },
+      {
+        "feature": "Oil_Temperature",
+        "importance": 0.017
+      },
+      {
+        "feature": "Power_Consumption",
+        "importance": 0.0136
+      }
+    ]
+  },
+  "xgboost": {
+    "algorithm": "XGBRegressor",
+    "n_estimators": 500,
+    "learning_rate": 0.05,
+    "max_depth": 6,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "r2_score": 0.8917,
+    "mae": 25.71,
+    "rmse": 35.0,
+    "feature_importance": [
+      {
+        "feature": "Temperature",
+        "importance": 0.0045
+      },
+      {
+        "feature": "Vibration",
+        "importance": 0.4552
+      },
+      {
+        "feature": "Motor_Current",
+        "importance": 0.4938
+      },
+      {
+        "feature": "Pressure",
+        "importance": 0.0043
+      },
+      {
+        "feature": "RPM",
+        "importance": 0.0045
+      },
+      {
+        "feature": "Flow_Rate",
+        "importance": 0.0046
+      },
+      {
+        "feature": "Oil_Temperature",
+        "importance": 0.0179
+      },
+      {
+        "feature": "Power_Consumption",
+        "importance": 0.0153
+      }
+    ]
+  },
+  "deltas": {
+    "r2_score_delta": -0.0052,
+    "mae_days_delta": 1.25,
+    "rmse_days_delta": 0.85
+  },
+  "lifecycle_variable": "Machine_Health",
+  "lifecycle_evaluation": [
+    {
+      "region": "Early Degradation (Health >= 80%)",
+      "sample_count": 9357,
+      "random_forest": {
+        "r2": 0.3606,
+        "mae": 34.39,
+        "rmse": 44.18
+      },
+      "xgboost": {
+        "r2": 0.3307,
+        "mae": 35.98,
+        "rmse": 45.2
+      },
+      "mae_delta": 1.59
+    },
+    {
+      "region": "Mid Degradation (60% <= Health < 80%)",
+      "sample_count": 2127,
+      "random_forest": {
+        "r2": -0.1595,
+        "mae": 9.82,
+        "rmse": 14.51
+      },
+      "xgboost": {
+        "r2": -0.2651,
+        "mae": 10.64,
+        "rmse": 15.15
+      },
+      "mae_delta": 0.82
+    },
+    {
+      "region": "Late Degradation (40% <= Health < 60%)",
+      "sample_count": 1870,
+      "random_forest": {
+        "r2": -0.3699,
+        "mae": 13.8,
+        "rmse": 17.62
+      },
+      "xgboost": {
+        "r2": -0.4791,
+        "mae": 14.69,
+        "rmse": 18.31
+      },
+      "mae_delta": 0.89
+    },
+    {
+      "region": "Near Failure (Health < 40%)",
+      "sample_count": 4896,
+      "random_forest": {
+        "r2": 0.574,
+        "mae": 15.92,
+        "rmse": 20.14
+      },
+      "xgboost": {
+        "r2": 0.5457,
+        "mae": 16.83,
+        "rmse": 20.8
+      },
+      "mae_delta": 0.91
+    }
+  ]
+}

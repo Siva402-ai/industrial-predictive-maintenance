@@ -22,19 +22,50 @@ class PredictiveMaintenanceModel:
             self.model = None
             self.scaler = None
 
-    def predict_rul(self, temperature, vibration, current):
+    def predict_rul(self, temperature, vibration, current, pressure=60.0, rpm=1750.0, flow_rate=50.0, oil_temperature=50.0, power_consumption=25.0):
+        preds = self.predict_rul_batch([{
+            "Temperature": temperature,
+            "Vibration": vibration,
+            "Motor_Current": current,
+            "Pressure": pressure,
+            "RPM": rpm,
+            "Flow_Rate": flow_rate,
+            "Oil_Temperature": oil_temperature,
+            "Power_Consumption": power_consumption
+        }])
+        return preds[0] if preds else 0
+
+    def predict_rul_batch(self, records_or_df):
+        """
+        Executes TRUE BATCH ML INFERENCE for all machines in a single pass.
+        Accepts a DataFrame or list of dicts containing all 8 telemetry features.
+        Executes EXACTLY ONE scaler.transform() and ONE model.predict() call for the entire fleet batch.
+        Returns a list of integer RUL predictions.
+        """
         if not self.model or not self.scaler:
-            return 0
-            
-        df = pd.DataFrame({
-            "Temperature": [temperature],
-            "Vibration": [vibration],
-            "Motor_Current": [current]
-        })
-        
-        X_scaled = self.scaler.transform(df)
-        rul_pred = self.model.predict(X_scaled)[0]
-        return max(0, int(rul_pred))
+            if isinstance(records_or_df, list):
+                return [0] * len(records_or_df)
+            return [0] * len(records_or_df.index)
+
+        if isinstance(records_or_df, list):
+            df = pd.DataFrame(records_or_df)
+        else:
+            df = records_or_df
+
+        feature_cols = [
+            "Temperature", "Vibration", "Motor_Current",
+            "Pressure", "RPM", "Flow_Rate", "Oil_Temperature", "Power_Consumption"
+        ]
+        # Fill missing features if any record lacks optional 8th feature
+        for col in feature_cols:
+            if col not in df.columns:
+                df[col] = 0.0
+
+        X_features = df[feature_cols]
+        X_scaled = self.scaler.transform(X_features)
+        raw_preds = self.model.predict(X_scaled)
+        return [max(0, int(round(p))) for p in raw_preds]
+
 
 def filter_displayed_rul(raw_prediction, prev_displayed_rul=None, health=100.0):
     """

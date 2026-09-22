@@ -10,13 +10,14 @@ export const getStatus = async () => {
   return res.data;
 };
 
-export const getCurrentData = async () => {
-  const res = await api.get('/current');
+export const getCurrentData = async (machineId = null) => {
+  const url = machineId ? `/current?machine_id=${machineId}` : '/current';
+  const res = await api.get(url);
   return res.data;
 };
 
-export const getHistoryData = async () => {
-  const res = await api.get('/history');
+export const getHistoryData = async (machineId = 'M-001') => {
+  const res = await api.get(`/history?machine_id=${machineId}`);
   return res.data;
 };
 
@@ -38,9 +39,8 @@ export const getModelMetrics = async () => {
   }
 };
 
-
-export const getRecentLogs = async () => {
-  const res = await api.get('/logs');
+export const getRecentLogs = async (machineId = 'M-001') => {
+  const res = await api.get(`/logs?machine_id=${machineId}`);
   return res.data;
 };
 
@@ -53,3 +53,4 @@ export const postControlAction = async (action, speed = 1.0) => {
   const res = await api.post('/control', { action, speed });
   return res.data;
 };
+
