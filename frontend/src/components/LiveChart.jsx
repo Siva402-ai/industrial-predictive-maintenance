@@ -69,19 +69,18 @@ const LiveChart = ({ historyData }) => {
   const currentRangeRef = useRef(null);
 
   const metricConfigs = {
-    Temperature: { label: 'Operating Temp (°C)', key: 'temperature_trend', color: '#2563EB', unit: '°C', minClamp: 55, maxClamp: 85, minSpan: 6, type: 'temperature', dtick: 2, minorDtick: 0.5 },
-    Vibration: { label: 'Vibration RMS (mm/s)', key: 'vibration_trend', color: '#2563EB', unit: 'mm/s', minClamp: 0, maxClamp: 6, minSpan: 1, type: 'vibration', dtick: 0.5, minorDtick: 0.1 },
-    Motor_Current: { label: 'Motor Current (A)', key: 'motor_current_trend', color: '#2563EB', unit: 'A', minClamp: 5, maxClamp: 25, minSpan: 3, type: 'current', dtick: 2, minorDtick: 0.5 },
-    Pressure: { label: 'Operating Pressure (PSI)', key: 'pressure_trend', color: '#2563EB', unit: 'PSI', minClamp: 30, maxClamp: 95, minSpan: 10, type: 'pressure', dtick: 10, minorDtick: 2 },
-    RPM: { label: 'Shaft Speed (RPM)', key: 'rpm_trend', color: '#2563EB', unit: 'RPM', minClamp: 1200, maxClamp: 2100, minSpan: 100, type: 'rpm', dtick: 100, minorDtick: 25 },
-    Flow_Rate: { label: 'Fluid Flow Rate (L/min)', key: 'flow_rate_trend', color: '#2563EB', unit: 'L/min', minClamp: 20, maxClamp: 80, minSpan: 10, type: 'flow', dtick: 10, minorDtick: 2 },
-    Oil_Temperature: { label: 'Lube Oil Temp (°C)', key: 'oil_temperature_trend', color: '#2563EB', unit: '°C', minClamp: 40, maxClamp: 85, minSpan: 6, type: 'temperature', dtick: 2, minorDtick: 0.5 },
-    Power_Consumption: { label: 'Power Demand (kW)', key: 'power_consumption_trend', color: '#2563EB', unit: 'kW', minClamp: 15, maxClamp: 45, minSpan: 5, type: 'power', dtick: 5, minorDtick: 1 },
+    Temperature: { label: 'Operating Temp', key: 'temperature_trend', color: '#2563EB', unit: '°C', minClamp: 55, maxClamp: 95, minSpan: 6, type: 'temperature', dtick: 5, minorDtick: 1 },
+    Vibration: { label: 'Vibration RMS', key: 'vibration_trend', color: '#2563EB', unit: 'mm/s', minClamp: 0, maxClamp: 8, minSpan: 1, type: 'vibration', dtick: 1, minorDtick: 0.2 },
+    Motor_Current: { label: 'Motor Current', key: 'motor_current_trend', color: '#2563EB', unit: 'A', minClamp: 5, maxClamp: 30, minSpan: 4, type: 'current', dtick: 5, minorDtick: 1 },
+    Pressure: { label: 'Pressure', key: 'pressure_trend', color: '#2563EB', unit: 'PSI', minClamp: 0, maxClamp: 95, minSpan: 10, type: 'pressure', dtick: 10, minorDtick: 2 },
+    RPM: { label: 'Shaft Speed', key: 'rpm_trend', color: '#2563EB', unit: 'RPM', minClamp: 1200, maxClamp: 2100, minSpan: 100, type: 'rpm', dtick: 100, minorDtick: 25 },
+    Flow_Rate: { label: 'Fluid Flow', key: 'flow_rate_trend', color: '#2563EB', unit: 'L/min', minClamp: 20, maxClamp: 180, minSpan: 15, type: 'flow', dtick: 20, minorDtick: 5 },
+    Oil_Temperature: { label: 'Lube Oil Temp', key: 'oil_temperature_trend', color: '#2563EB', unit: '°C', minClamp: 35, maxClamp: 95, minSpan: 6, type: 'temperature', dtick: 5, minorDtick: 1 },
+    Power_Consumption: { label: 'Power Demand', key: 'power_consumption_trend', color: '#2563EB', unit: 'kW', minClamp: 10, maxClamp: 55, minSpan: 6, type: 'power', dtick: 10, minorDtick: 2 },
   };
 
   const config = metricConfigs[selectedMetric] || metricConfigs.Temperature;
   const trend = historyData?.[config.key] || { actual: [], predicted_future: [] };
-  const healthTrend = historyData?.machine_health_trend?.actual || [];
 
   const xHist = trend.actual.map((_, i) => i + 1);
   const latestDay = xHist.length > 0 ? xHist[xHist.length - 1] : 1;
@@ -92,118 +91,78 @@ const LiveChart = ({ historyData }) => {
   const visibleMin = Math.max(1, latestDay - 100);
   const visibleMax = latestDay + 20;
 
-  // Purely local in-memory transformation (zero backend network calls)
   const baseline = trend.actual.length > 0 ? trend.actual[0] : 0;
-  const yActual = isDeviationView ? trend.actual.map((v) => roundDec(v - baseline, 2)) : trend.actual;
-  const yPredicted = isDeviationView ? trend.predicted_future.map((v) => roundDec(v - baseline, 2)) : trend.predicted_future;
-  
+  const yActual = isDeviationView ? trend.actual.map((v) => Number((v - baseline).toFixed(2))) : trend.actual;
+  const yPredicted = isDeviationView ? trend.predicted_future.map((v) => Number((v - baseline).toFixed(2))) : trend.predicted_future;
+
   const adaptiveYRange = calculateAdaptiveYRange(
     yActual,
     isDeviationView ? -10 : config.minClamp,
-    isDeviationView ? 30 : config.maxClamp,
-    isDeviationView ? 4 : config.minSpan,
+    isDeviationView ? 25 : config.maxClamp,
+    config.minSpan,
     config.type,
     currentRangeRef
   );
 
-  const yAxisTitle = isDeviationView ? `Δ ${config.label} (vs Baseline ${baseline} ${config.unit})` : config.label;
-  const hoverFmt = `%{y:.2f} ${config.unit}<extra></extra>`;
-
-  function roundDec(val, dec = 2) {
-    return Math.round(val * Math.pow(10, dec)) / Math.pow(10, dec);
-  }
-
-  // Telemetry-driven degradation detection (first day health drops below 98.0%)
-  let degradationDay = null;
-  for (let i = 0; i < healthTrend.length; i++) {
-    if (healthTrend[i] < 98.0) {
-      degradationDay = i + 1;
-      break;
-    }
-  }
-
-  const shapes = degradationDay ? [
-    {
-      type: 'line',
-      x0: degradationDay,
-      x1: degradationDay,
-      y0: 0,
-      y1: 1,
-      yref: 'paper',
-      line: { color: '#EF4444', width: 1.5, dash: 'dash' },
-    },
-  ] : [];
-
-  const annotations = degradationDay ? [
-    {
-      x: degradationDay,
-      y: 1.05,
-      yref: 'paper',
-      text: `Condition Degradation Detected (Day ${degradationDay})`,
-      showarrow: false,
-      font: { size: 10, color: '#DC2626' },
-      bgcolor: '#FEE2E2',
-      bordercolor: '#FCA5A5',
-      borderwidth: 1,
-      borderpad: 2,
-    },
-  ] : [];
+  const currentVal = trend.actual.length > 0 ? trend.actual[trend.actual.length - 1] : '--';
 
   return (
-    <div className="industrial-card p-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-gray-200 mb-2 gap-2">
-        <div>
-          <h2 className="text-sm font-bold text-gray-900">Live Sensor Stream & Predictive Projection</h2>
-          <p className="text-xs text-gray-500">Real-time signal analysis across digital twin lifecycle (8 Telemetry Parameters)</p>
+    <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 flex flex-col">
+      {/* Header & Controls */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
+        <div className="flex items-center space-x-3">
+          <div>
+            <div className="flex items-center space-x-2">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Telemetry Stream & Predictive Horizon
+              </h3>
+              <span className="text-[11px] font-mono font-bold bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-200">
+                {currentVal} {config.unit}
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-500 mt-0.5">
+              Live measurement vs. 20-step forward extrapolated ML trajectory
+            </p>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Purely Local Deviation View Toggle */}
-          <div className="flex items-center space-x-1 bg-gray-100 p-0.5 rounded-lg border border-gray-200">
-            <button
-              onClick={() => {
-                currentRangeRef.current = null;
-                setIsDeviationView(false);
-              }}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${!isDeviationView ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
-            >
-              Absolute
-            </button>
-            <button
-              onClick={() => {
-                currentRangeRef.current = null;
-                setIsDeviationView(true);
-              }}
-              className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-colors ${isDeviationView ? 'bg-blue-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
-            >
-              Δ Deviation
-            </button>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <label className="text-xs font-semibold text-gray-600">Select Parameter:</label>
-            <select
-              value={selectedMetric}
-              onChange={(e) => {
-                currentRangeRef.current = null;
-                setSelectedMetric(e.target.value);
-              }}
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block px-3 py-1.5 font-medium cursor-pointer"
-            >
-              <option value="Temperature">Operating Temp (°C)</option>
-              <option value="Oil_Temperature">Lube Oil Temp (°C)</option>
-              <option value="Vibration">Vibration RMS (mm/s)</option>
-              <option value="RPM">Shaft Speed (RPM)</option>
-              <option value="Pressure">Pressure (PSI)</option>
-              <option value="Flow_Rate">Flow Rate (L/min)</option>
-              <option value="Motor_Current">Motor Current (A)</option>
-              <option value="Power_Consumption">Power Demand (kW)</option>
-            </select>
-          </div>
+        {/* View toggles */}
+        <div className="flex items-center space-x-2">
+          <button
+            onClick={() => setIsDeviationView(!isDeviationView)}
+            className={`text-xs px-2.5 py-1 rounded-md font-semibold transition border ${
+              isDeviationView
+                ? 'bg-indigo-50 text-indigo-700 border-indigo-200 shadow-xs'
+                : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+            }`}
+          >
+            {isDeviationView ? 'Δ Baseline Deviation' : 'Absolute Values'}
+          </button>
         </div>
       </div>
 
-      <div className="w-full h-[360px]">
+      {/* Metric Selector Tabs */}
+      <div className="flex items-center space-x-1.5 overflow-x-auto py-2 border-b border-slate-100 scrollbar-thin">
+        {Object.entries(metricConfigs).map(([key, item]) => {
+          const isSelected = selectedMetric === key;
+          return (
+            <button
+              key={key}
+              onClick={() => setSelectedMetric(key)}
+              className={`px-2.5 py-1 rounded-md text-xs font-semibold whitespace-nowrap transition-all ${
+                isSelected
+                  ? 'bg-blue-600 text-white shadow-xs'
+                  : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              {item.label} ({item.unit})
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Plotly Interactive Chart Container */}
+      <div className="w-full h-80 pt-2">
         <Plot
           data={[
             {
@@ -211,58 +170,52 @@ const LiveChart = ({ historyData }) => {
               y: yActual,
               type: 'scatter',
               mode: 'lines+markers',
-              name: isDeviationView ? 'Δ Actual Reading' : 'Actual Reading',
-              line: { color: config.color, width: 3, shape: 'spline', smoothing: 0.45 },
-              marker: { size: 5, color: config.color },
-              hovertemplate: hoverFmt,
+              name: 'Actual Telemetry',
+              line: { color: '#2563EB', width: 2.5, shape: 'spline', smoothing: 0.3 },
+              marker: { size: 3, color: '#1D4ED8' },
+              hovertemplate: `Day %{x}: %{y:.2f} ${config.unit}<extra></extra>`,
             },
             {
               x: xFuture,
               y: yPredicted,
               type: 'scatter',
               mode: 'lines',
-              name: isDeviationView ? 'Δ Predicted Future' : 'Predicted Future',
-              line: { color: '#F59E0B', width: 2.5, dash: 'dash', shape: 'spline', smoothing: 0.45 },
-              hovertemplate: hoverFmt,
+              name: 'Predicted Future',
+              line: { color: '#D97706', width: 2.5, dash: 'dash' },
+              hovertemplate: `Proj Day %{x}: %{y:.2f} ${config.unit}<extra></extra>`,
             },
           ]}
           layout={{
             autosize: true,
-            height: 350,
-            uirevision: `${selectedMetric}_${isDeviationView}`,
-            transition: { duration: 300, easing: 'cubic-in-out' },
-            margin: { l: 50, r: 20, t: 40, b: 45 },
-            paper_bgcolor: 'rgba(0,0,0,0)',
-            plot_bgcolor: '#FAFAFA',
-            xaxis: {
-              title: { text: 'Day', font: { size: 11, color: '#6B7280' } },
-              gridcolor: '#E5E7EB',
-              zeroline: false,
-              range: [visibleMin, visibleMax],
-              autorange: false,
-            },
-            yaxis: {
-              title: { text: yAxisTitle, font: { size: 11, color: '#6B7280' } },
-              gridcolor: '#E5E7EB',
-              zeroline: isDeviationView,
-              zerolinecolor: '#9CA3AF',
-              zerolinewidth: 1.5,
-              range: adaptiveYRange,
-              dtick: config.dtick,
-              minor: { showgrid: true, gridcolor: '#F3F4F6', dtick: config.minorDtick },
-              autorange: false,
-            },
-            shapes: shapes,
-            annotations: annotations,
+            margin: { l: 48, r: 24, t: 12, b: 36 },
+            paper_bgcolor: '#FFFFFF',
+            plot_bgcolor: '#F8FAFC',
+            font: { family: 'inherit', size: 10, color: '#475569' },
+            showlegend: true,
             legend: {
               orientation: 'h',
-              y: 1.15,
-              x: 1,
-              xanchor: 'right',
-              font: { size: 11, color: '#374151' },
+              x: 0.5,
+              y: 1.08,
+              xanchor: 'center',
+              font: { size: 10, color: '#334155' },
             },
+            xaxis: {
+              title: { text: 'Operating Timeline (Days / Cycles)', font: { size: 10, color: '#64748B' } },
+              range: [visibleMin, visibleMax],
+              gridcolor: '#E2E8F0',
+              zeroline: false,
+              tickfont: { size: 9, color: '#64748B' },
+            },
+            yaxis: {
+              title: { text: `${config.label} (${config.unit})`, font: { size: 10, color: '#64748B' } },
+              gridcolor: '#E2E8F0',
+              zeroline: false,
+              range: adaptiveYRange,
+              tickfont: { size: 9, color: '#64748B' },
+            },
+            hovermode: 'x unified',
           }}
-          useResizeHandler={true}
+          useResizeHandler
           style={{ width: '100%', height: '100%' }}
           config={{ displayModeBar: false, responsive: true }}
         />
@@ -272,6 +225,3 @@ const LiveChart = ({ historyData }) => {
 };
 
 export default LiveChart;
-
-
-

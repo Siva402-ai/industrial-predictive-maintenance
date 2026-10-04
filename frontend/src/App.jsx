@@ -135,7 +135,13 @@ function App() {
   return (
     <div className="min-h-screen bg-[#F5F7FA] flex flex-col font-sans text-gray-900 antialiased selection:bg-blue-100">
       {/* Top Bar across entire page */}
-      <TopBar backendStatus={backendStatus} statusData={statusData} currentData={currentData} />
+      <TopBar
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        backendStatus={backendStatus}
+        statusData={statusData}
+        currentData={currentData}
+      />
 
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}

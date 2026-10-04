@@ -1,11 +1,24 @@
 import React from 'react';
 import Plot from 'react-plotly.js';
-import { Cpu, CheckCircle2, BarChart2, TrendingUp, Layers, FlaskConical, Award, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import {
+  Cpu,
+  CheckCircle2,
+  BarChart2,
+  TrendingUp,
+  Layers,
+  FlaskConical,
+  Award,
+  ArrowUpRight,
+  ArrowDownRight,
+  Database,
+  Target,
+  Zap
+} from 'lucide-react';
 
 const ModelEvaluation = ({ modelData }) => {
   if (!modelData) {
     return (
-      <div className="industrial-card p-8 text-center text-gray-500">
+      <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400 font-medium">
         Loading model evaluation metrics...
       </div>
     );
@@ -47,17 +60,22 @@ const ModelEvaluation = ({ modelData }) => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Model Summary Card */}
-      <div className="industrial-card p-6 bg-white">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-gray-200 mb-6 gap-3">
+    <div className="space-y-6 pb-8">
+      
+      {/* 1. MODEL SUMMARY & SPECS BANNER */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 mb-4 gap-3">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-              <Cpu className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 flex items-center justify-center">
+              <Cpu className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-gray-900">Random Forest Production Model & XGBoost Benchmark Evaluation</h2>
-              <p className="text-xs text-gray-500">Holdout validation metrics on 18,250 test samples (80/20 train/test split)</p>
+              <h2 className="text-base font-bold text-slate-900 tracking-tight">
+                Production Model Inference & Benchmark Evaluation
+              </h2>
+              <p className="text-xs text-slate-500">
+                Holdout validation metrics evaluated on {test_size.toLocaleString()} test samples (80/20 train/test split)
+              </p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -66,210 +84,159 @@ const ModelEvaluation = ({ modelData }) => {
             </span>
             {xgbExp && (
               <span className="inline-flex items-center px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-semibold border border-purple-200">
-                <FlaskConical className="w-3.5 h-3.5 mr-1" /> XGBoost (Offline Experiment)
+                <FlaskConical className="w-3.5 h-3.5 mr-1" /> XGBoost (Offline Benchmark)
               </span>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div className="bg-gray-50 p-3.5 rounded-lg border border-gray-200">
-            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Production Model</span>
-            <span className="text-xs font-bold text-gray-900 mt-1 block truncate">Random Forest</span>
+        {/* 6 Top Metric Cards */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-200">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Production Engine</span>
+            <span className="text-xs font-bold text-slate-900 mt-1 block truncate">Random Forest</span>
+            <span className="text-[10px] text-slate-400">100 Estimators</span>
           </div>
 
-          <div className="bg-gray-50 p-3.5 rounded-lg border border-gray-200">
-            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Dataset Size</span>
-            <span className="text-base font-bold text-gray-900 mt-1 block">{dataset_size.toLocaleString()} rows</span>
+          <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-200">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Dataset</span>
+            <span className="text-base font-bold text-slate-900 mt-1 block font-mono">{dataset_size.toLocaleString()}</span>
+            <span className="text-[10px] text-slate-400">Telemetry records</span>
           </div>
 
-          <div className="bg-gray-50 p-3.5 rounded-lg border border-gray-200">
-            <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Train/Test Split</span>
-            <span className="text-base font-bold text-gray-900 mt-1 block">{train_size.toLocaleString()} / {test_size.toLocaleString()}</span>
+          <div className="bg-slate-50/80 p-3 rounded-lg border border-slate-200">
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Train / Test Split</span>
+            <span className="text-xs font-bold text-slate-900 mt-1 block font-mono">
+              {train_size.toLocaleString()} / {test_size.toLocaleString()}
+            </span>
+            <span className="text-[10px] text-slate-400">80% Train, 20% Test</span>
           </div>
 
-          <div className="bg-blue-50/60 p-3.5 rounded-lg border border-blue-200">
-            <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider block">Production MAE</span>
-            <span className="text-xl font-bold text-blue-900 mt-1 block">{rfMae} <span className="text-xs font-normal text-blue-600">Days</span></span>
+          <div className="bg-blue-50/60 p-3 rounded-lg border border-blue-200">
+            <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">Production MAE</span>
+            <span className="text-xl font-bold text-blue-900 mt-1 block font-mono">
+              {rfMae} <span className="text-xs font-normal text-blue-600">Days</span>
+            </span>
+            <span className="text-[10px] text-blue-600 font-medium">Mean Absolute Error</span>
           </div>
 
-          <div className="bg-blue-50/60 p-3.5 rounded-lg border border-blue-200">
-            <span className="text-[11px] font-bold text-blue-700 uppercase tracking-wider block">Production RMSE</span>
-            <span className="text-xl font-bold text-blue-900 mt-1 block">{rfRmse} <span className="text-xs font-normal text-blue-600">Days</span></span>
+          <div className="bg-blue-50/60 p-3 rounded-lg border border-blue-200">
+            <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block">Production RMSE</span>
+            <span className="text-xl font-bold text-blue-900 mt-1 block font-mono">
+              {rfRmse} <span className="text-xs font-normal text-blue-600">Days</span>
+            </span>
+            <span className="text-[10px] text-blue-600 font-medium">Root Mean Squared Error</span>
           </div>
 
-          <div className="bg-emerald-50/60 p-3.5 rounded-lg border border-emerald-200">
-            <span className="text-[11px] font-bold text-emerald-700 uppercase tracking-wider block">Production R² Score</span>
-            <span className="text-xl font-bold text-emerald-900 mt-1 block">{rfR2}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Model Benchmark Comparison Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Model Performance Comparison Table */}
-        <div className="industrial-card p-5 bg-white">
-          <div className="flex items-center space-x-2 pb-3 border-b border-gray-200 mb-3">
-            <Award className="w-5 h-5 text-indigo-600" />
-            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
-              Random Forest (Production) vs XGBoost (Offline Experiment)
-            </h3>
-          </div>
-          <p className="text-xs text-gray-500 mb-3">
-            Random Forest is the sole active production model for live SCADA telemetry and 8-machine fleet batch inference.
-          </p>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-gray-600 font-bold uppercase text-[10px]">
-                  <th className="py-2 px-3">Model Architecture</th>
-                  <th className="py-2 px-3">Features</th>
-                  <th className="py-2 px-3">Role</th>
-                  <th className="py-2 px-3">R² Score</th>
-                  <th className="py-2 px-3">MAE (Days)</th>
-                  <th className="py-2 px-3">RMSE (Days)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {/* 3-Feature RF Baseline */}
-                <tr className="bg-slate-50 font-medium">
-                  <td className="py-2.5 px-3 font-bold text-gray-800">Random Forest (Baseline)</td>
-                  <td className="py-2.5 px-3 font-mono text-xs">3 Features</td>
-                  <td className="py-2.5 px-3">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-200 text-slate-700 border border-slate-300">
-                      Preserved Baseline
-                    </span>
-                  </td>
-                  <td className="py-2.5 px-3 font-mono font-bold text-slate-700">
-                    {xgbExp?.rf_3feature_baseline?.r2_score ?? '0.8548'}
-                  </td>
-                  <td className="py-2.5 px-3 font-mono font-bold text-slate-700">
-                    {xgbExp?.rf_3feature_baseline?.mae ?? '29.39'}d
-                  </td>
-                  <td className="py-2.5 px-3 font-mono text-slate-600">
-                    {xgbExp?.rf_3feature_baseline?.rmse ?? '40.52'}d
-                  </td>
-                </tr>
-                {/* 8-Feature RF Production */}
-                <tr className="bg-blue-50/60 font-medium border-l-4 border-l-blue-600">
-                  <td className="py-2.5 px-3 font-bold text-gray-900">Random Forest (8-Feature)</td>
-                  <td className="py-2.5 px-3 font-mono text-xs font-semibold text-blue-700">8 Features</td>
-                  <td className="py-2.5 px-3">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
-                      Active Production
-                    </span>
-                  </td>
-                  <td className="py-2.5 px-3 font-mono font-bold text-emerald-700">{rfR2 ?? '0.8969'}</td>
-                  <td className="py-2.5 px-3 font-mono font-bold text-blue-700">{rfMae != null ? `${rfMae}d` : '24.46d'}</td>
-                  <td className="py-2.5 px-3 font-mono text-gray-700">{rfRmse != null ? `${rfRmse}d` : '34.15d'}</td>
-                </tr>
-                {/* 8-Feature XGBoost Experiment */}
-                <tr>
-                  <td className="py-2.5 px-3 font-bold text-gray-900">XGBoost Regressor (8-Feature)</td>
-                  <td className="py-2.5 px-3 font-mono text-xs">8 Features</td>
-                  <td className="py-2.5 px-3">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-300">
-                      Offline Benchmark
-                    </span>
-                  </td>
-                  <td className="py-2.5 px-3 font-mono font-bold text-purple-700">{xgbR2 ?? '0.8917'}</td>
-                  <td className="py-2.5 px-3 font-mono font-bold text-purple-700">{xgbMae != null ? `${xgbMae}d` : '25.71d'}</td>
-                  <td className="py-2.5 px-3 font-mono text-gray-700">{xgbRmse != null ? `${xgbRmse}d` : '35.00d'}</td>
-                </tr>
-                {deltaR2 != null && (
-                  <tr className="bg-gray-50 text-[11px] font-semibold text-gray-600">
-                    <td className="py-2 px-3 font-bold text-slate-700" colSpan={2}>Upgrade Delta (8-Feat RF vs 3-Feat Base)</td>
-                    <td className="py-2 px-3 text-gray-400">—</td>
-                    <td className="py-2 px-3 font-mono text-emerald-600">+0.0421</td>
-                    <td className="py-2 px-3 font-mono text-blue-600">-4.93d</td>
-                    <td className="py-2 px-3 font-mono text-blue-600">-6.37d</td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Degradation Lifecycle Comparison Table */}
-        <div className="industrial-card p-5 bg-white">
-          <div className="flex items-center space-x-2 pb-3 border-b border-gray-200 mb-3">
-            <FlaskConical className="w-5 h-5 text-purple-600" />
-            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">
-              Degradation Lifecycle Performance (MAE by Region)
-            </h3>
-          </div>
-          <p className="text-xs text-gray-500 mb-3">
-            Comparative Mean Absolute Error (MAE in days) across standard machine health wear regions.
-          </p>
-
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-gray-200 bg-gray-50 text-gray-600 font-bold uppercase text-[10px]">
-                  <th className="py-2 px-3">Degradation Lifecycle Region</th>
-                  <th className="py-2 px-3">RF MAE</th>
-                  <th className="py-2 px-3">XGB MAE</th>
-                  <th className="py-2 px-3">MAE Delta</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {lifecycleRows.map((row, idx) => {
-                  const rfM = row.random_forest?.mae;
-                  const xgbM = row.xgboost?.mae;
-                  const d = row.mae_delta;
-                  return (
-                    <tr key={idx} className="hover:bg-gray-50">
-                      <td className="py-2.5 px-3 font-semibold text-gray-800">{row.region}</td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-blue-600">{rfM != null ? `${rfM}d` : 'N/A'}</td>
-                      <td className="py-2.5 px-3 font-mono font-bold text-purple-600">{xgbM != null ? `${xgbM}d` : 'N/A'}</td>
-                      <td className="py-2.5 px-3 font-mono font-medium">
-                        {d != null ? (
-                          <span className={d <= 0 ? 'text-emerald-600' : 'text-amber-600'}>
-                            {d > 0 ? `+${d}d` : `${d}d`}
-                          </span>
-                        ) : (
-                          'N/A'
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+          <div className="bg-emerald-50/60 p-3 rounded-lg border border-emerald-200">
+            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">Accuracy (R² Score)</span>
+            <span className="text-xl font-bold text-emerald-900 mt-1 block font-mono">{rfR2}</span>
+            <span className="text-[10px] text-emerald-600 font-medium">Coefficient of Det.</span>
           </div>
         </div>
       </div>
 
-      {/* Diagnostic Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* 2. ALGORITHM BENCHMARK COMPARISON TABLE */}
+      {xgbExp && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-5">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-3">
+            <div>
+              <div className="flex items-center space-x-2">
+                <FlaskConical className="w-4 h-4 text-purple-600" />
+                <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                  Algorithm Benchmark: Random Forest vs. XGBoost
+                </h3>
+              </div>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Head-to-head performance comparison on identical 80/20 train/test holdout splits
+              </p>
+            </div>
+            <span className="text-[11px] font-mono text-purple-700 bg-purple-50 px-2.5 py-0.5 rounded border border-purple-200 font-semibold">
+              Experimental Offline Study
+            </span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50/80 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  <th className="py-2.5 px-3">Metric</th>
+                  <th className="py-2.5 px-3">Random Forest (Production)</th>
+                  <th className="py-2.5 px-3">XGBoost (Experiment)</th>
+                  <th className="py-2.5 px-3">Variance / Delta</th>
+                  <th className="py-2.5 px-3">Operational Takeaway</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
+                <tr className="hover:bg-slate-50/70">
+                  <td className="py-2.5 px-3 font-sans font-bold text-slate-900">R² Accuracy Score</td>
+                  <td className="py-2.5 px-3 font-bold text-blue-700">{rfR2}</td>
+                  <td className="py-2.5 px-3 font-bold text-purple-700">{xgbR2 ?? '--'}</td>
+                  <td className="py-2.5 px-3 font-bold text-slate-800">{deltaR2 !== undefined ? (deltaR2 >= 0 ? `+${deltaR2}` : deltaR2) : '--'}</td>
+                  <td className="py-2.5 px-3 font-sans text-slate-600">Both models capture strong variance across all 8 machines</td>
+                </tr>
+                <tr className="hover:bg-slate-50/70">
+                  <td className="py-2.5 px-3 font-sans font-bold text-slate-900">Mean Absolute Error (MAE)</td>
+                  <td className="py-2.5 px-3 font-bold text-blue-700">{rfMae} Days</td>
+                  <td className="py-2.5 px-3 font-bold text-purple-700">{xgbMae ?? '--'} Days</td>
+                  <td className="py-2.5 px-3 font-bold text-slate-800">{deltaMae !== undefined ? `${deltaMae} Days` : '--'}</td>
+                  <td className="py-2.5 px-3 font-sans text-slate-600">Low deviation throughout the degradation lifecycle</td>
+                </tr>
+                <tr className="hover:bg-slate-50/70">
+                  <td className="py-2.5 px-3 font-sans font-bold text-slate-900">Root Mean Squared Error (RMSE)</td>
+                  <td className="py-2.5 px-3 font-bold text-blue-700">{rfRmse} Days</td>
+                  <td className="py-2.5 px-3 font-bold text-purple-700">{xgbRmse ?? '--'} Days</td>
+                  <td className="py-2.5 px-3 font-bold text-slate-800">{deltaRmse !== undefined ? `${deltaRmse} Days` : '--'}</td>
+                  <td className="py-2.5 px-3 font-sans text-slate-600">Stable penalization against large outlier errors</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 3. FEATURE IMPORTANCE & SCATTER PLOT */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        
         {/* Feature Importance Bar Chart */}
-        <div className="industrial-card p-4">
-          <div className="flex items-center space-x-2 pb-3 border-b border-gray-200 mb-2">
-            <BarChart2 className="w-4 h-4 text-blue-600" />
-            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Production Model Feature Weights</h3>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 flex flex-col">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              Telemetry Feature Importance (Gini Impurity)
+            </h3>
+            <span className="text-[11px] text-slate-500">8 Sensor Channels</span>
           </div>
+
           <div className="w-full h-64">
             <Plot
               data={[
                 {
                   x: feature_importance.map((f) => f.importance),
-                  y: feature_importance.map((f) => f.feature === 'Vibration' ? 'Vibration RMS' : f.feature.replace('_', ' ')),
+                  y: feature_importance.map((f) => f.feature),
                   type: 'bar',
                   orientation: 'h',
                   marker: { color: '#2563EB' },
+                  hovertemplate: `%{y}: %{x:.3f} weight<extra></extra>`,
                 },
               ]}
               layout={{
                 autosize: true,
-                height: 240,
-                margin: { l: 95, r: 20, t: 10, b: 35 },
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: '#FAFAFA',
-                xaxis: { title: { text: 'Gini Feature Weight', font: { size: 10, color: '#6B7280' } }, gridcolor: '#F3F4F6' },
-                yaxis: { automargin: true, font: { size: 11, color: '#111827' } },
+                margin: { l: 120, r: 16, t: 8, b: 32 },
+                paper_bgcolor: '#FFFFFF',
+                plot_bgcolor: '#F8FAFC',
+                font: { family: 'inherit', size: 9, color: '#475569' },
+                xaxis: {
+                  title: { text: 'Relative Importance Weight', font: { size: 9, color: '#64748B' } },
+                  gridcolor: '#E2E8F0',
+                  zeroline: false,
+                  tickfont: { size: 9, color: '#64748B' },
+                },
+                yaxis: {
+                  autorange: 'reversed',
+                  tickfont: { size: 9, color: '#334155' },
+                },
               }}
-              useResizeHandler={true}
+              useResizeHandler
               style={{ width: '100%', height: '100%' }}
               config={{ displayModeBar: false, responsive: true }}
             />
@@ -277,11 +244,14 @@ const ModelEvaluation = ({ modelData }) => {
         </div>
 
         {/* Prediction vs Actual Scatter Plot */}
-        <div className="industrial-card p-4">
-          <div className="flex items-center space-x-2 pb-3 border-b border-gray-200 mb-2">
-            <TrendingUp className="w-4 h-4 text-blue-600" />
-            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Prediction vs Actual</h3>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 flex flex-col">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              Predicted vs. Actual RUL Scatter (Test Split)
+            </h3>
+            <span className="text-[11px] text-slate-500">Parity Line Overlay</span>
           </div>
+
           <div className="w-full h-64">
             <Plot
               data={[
@@ -290,67 +260,144 @@ const ModelEvaluation = ({ modelData }) => {
                   y: scatter_plot.predicted,
                   mode: 'markers',
                   type: 'scatter',
-                  marker: { color: '#2563EB', size: 6, opacity: 0.7 },
-                  name: 'Test Point',
+                  name: 'Holdout Samples',
+                  marker: { color: '#3B82F6', size: 4, opacity: 0.5 },
+                  hovertemplate: `Actual: %{x}d | Pred: %{y}d<extra></extra>`,
                 },
                 {
-                  x: [0, 1000],
-                  y: [0, 1000],
+                  x: [0, 300],
+                  y: [0, 300],
                   mode: 'lines',
                   type: 'scatter',
-                  line: { color: '#EF4444', dash: 'dash', width: 1.5 },
-                  name: 'Ideal Fit (1:1)',
+                  name: 'Perfect Parity (y=x)',
+                  line: { color: '#EF4444', width: 2, dash: 'dash' },
+                  hoverinfo: 'none',
                 },
               ]}
               layout={{
                 autosize: true,
-                height: 240,
-                margin: { l: 40, r: 15, t: 10, b: 35 },
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: '#FAFAFA',
-                xaxis: { title: { text: 'Actual RUL (Days)', font: { size: 10, color: '#6B7280' } }, gridcolor: '#F3F4F6' },
-                yaxis: { title: { text: 'Predicted RUL (Days)', font: { size: 10, color: '#6B7280' } }, gridcolor: '#F3F4F6' },
-                legend: { orientation: 'h', y: 1.15, x: 1, xanchor: 'right', font: { size: 10 } },
+                margin: { l: 44, r: 16, t: 8, b: 32 },
+                paper_bgcolor: '#FFFFFF',
+                plot_bgcolor: '#F8FAFC',
+                font: { family: 'inherit', size: 9, color: '#475569' },
+                xaxis: {
+                  title: { text: 'Actual Ground-Truth RUL (Days)', font: { size: 9, color: '#64748B' } },
+                  gridcolor: '#E2E8F0',
+                  zeroline: false,
+                  range: [0, 300],
+                  tickfont: { size: 9, color: '#64748B' },
+                },
+                yaxis: {
+                  title: { text: 'Predicted RUL (Days)', font: { size: 9, color: '#64748B' } },
+                  gridcolor: '#E2E8F0',
+                  zeroline: false,
+                  range: [0, 300],
+                  tickfont: { size: 9, color: '#64748B' },
+                },
+                legend: { orientation: 'h', x: 0.5, y: 1.12, xanchor: 'center', font: { size: 9, color: '#475569' } },
               }}
-              useResizeHandler={true}
+              useResizeHandler
               style={{ width: '100%', height: '100%' }}
               config={{ displayModeBar: false, responsive: true }}
             />
           </div>
         </div>
 
-        {/* Residual Error Histogram */}
-        <div className="industrial-card p-4">
-          <div className="flex items-center space-x-2 pb-3 border-b border-gray-200 mb-2">
-            <Layers className="w-4 h-4 text-blue-600" />
-            <h3 className="text-xs font-bold text-gray-900 uppercase tracking-wider">Residual Error Histogram</h3>
+      </div>
+
+      {/* 4. RESIDUAL ERROR & LIFECYCLE BREAKDOWN */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        
+        {/* Residual Histogram Plot */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 flex flex-col">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
+            <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+              Residual Error Distribution (Actual - Pred)
+            </h3>
+            <span className="text-[11px] text-slate-500">Zero-Centered Gaussian</span>
           </div>
-          <div className="w-full h-64">
+
+          <div className="w-full h-56">
             <Plot
               data={[
                 {
                   x: residuals,
                   type: 'histogram',
-                  marker: { color: '#22C55E' },
-                  opacity: 0.85,
+                  nbinsx: 35,
+                  marker: { color: '#6366F1' },
+                  hovertemplate: `Residual: %{x}d | Count: %{y}<extra></extra>`,
                 },
               ]}
               layout={{
                 autosize: true,
-                height: 240,
-                margin: { l: 40, r: 15, t: 10, b: 35 },
-                paper_bgcolor: 'rgba(0,0,0,0)',
-                plot_bgcolor: '#FAFAFA',
-                xaxis: { title: { text: 'Residual Error (Actual - Pred)', font: { size: 10, color: '#6B7280' } }, gridcolor: '#F3F4F6' },
-                yaxis: { title: { text: 'Frequency', font: { size: 10, color: '#6B7280' } }, gridcolor: '#F3F4F6' },
+                margin: { l: 44, r: 16, t: 8, b: 32 },
+                paper_bgcolor: '#FFFFFF',
+                plot_bgcolor: '#F8FAFC',
+                font: { family: 'inherit', size: 9, color: '#475569' },
+                xaxis: {
+                  title: { text: 'Residual Error (Days)', font: { size: 9, color: '#64748B' } },
+                  gridcolor: '#E2E8F0',
+                  zeroline: true,
+                  zerolinecolor: '#CBD5E1',
+                  tickfont: { size: 9, color: '#64748B' },
+                },
+                yaxis: {
+                  title: { text: 'Sample Frequency', font: { size: 9, color: '#64748B' } },
+                  gridcolor: '#E2E8F0',
+                  zeroline: false,
+                  tickfont: { size: 9, color: '#64748B' },
+                },
               }}
-              useResizeHandler={true}
+              useResizeHandler
               style={{ width: '100%', height: '100%' }}
               config={{ displayModeBar: false, responsive: true }}
             />
           </div>
         </div>
+
+        {/* Degradation Lifecycle Phase Breakdown Table */}
+        <div className="bg-white rounded-xl border border-slate-200 shadow-xs p-4 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100 mb-2">
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Degradation Lifecycle Phase Error
+              </h3>
+              <span className="text-[11px] text-slate-500">Phase Breakdown</span>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50/80 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    <th className="py-2 px-2.5">Degradation Phase</th>
+                    <th className="py-2 px-2.5">RF MAE</th>
+                    <th className="py-2 px-2.5">XGB MAE</th>
+                    <th className="py-2 px-2.5">Delta</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-mono text-[11px]">
+                  {lifecycleRows.map((row, i) => (
+                    <tr key={i} className="hover:bg-slate-50/70">
+                      <td className="py-2 px-2.5 font-sans font-semibold text-slate-800">{row.region}</td>
+                      <td className="py-2 px-2.5 font-bold text-blue-700">{row.random_forest?.mae?.toFixed(1) ?? '--'}d</td>
+                      <td className="py-2 px-2.5 font-bold text-purple-700">{row.xgboost?.mae?.toFixed(1) ?? '--'}d</td>
+                      <td className="py-2 px-2.5 font-bold text-slate-700">
+                        {row.mae_delta !== undefined ? (row.mae_delta >= 0 ? `+${row.mae_delta.toFixed(2)}` : row.mae_delta.toFixed(2)) : '--'}d
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <p className="text-[10px] text-slate-400 mt-2">
+            * Near-failure and mid-degradation phases demonstrate highest precision (≤ 15–18 days MAE).
+          </p>
+        </div>
+
       </div>
+
     </div>
   );
 };

@@ -32,6 +32,7 @@ from predict import PredictiveMaintenanceModel, get_future_trend, filter_display
 from maintenance_engine import get_maintenance_recommendation
 from preprocessing import load_data, preprocess_data
 from utils import get_status_color
+from mqtt_service import MQTTService, MQTTConfig
 
 app = FastAPI(title="Industrial Predictive Maintenance API - 8-Machine Fleet Engine")
 
@@ -46,6 +47,7 @@ app.add_middleware(
 
 model_service = PredictiveMaintenanceModel()
 sim_engine = FleetSimulator(max_lifespan_days=250, degradation_factor=1.8)
+mqtt_service = MQTTService()
 
 # Load CSV dataset exclusively for model evaluation metrics (/api/model)
 df_eval = load_data()
@@ -76,14 +78,16 @@ def reset_simulation_state():
     generate_next_telemetry_step()
 
 
-def generate_next_telemetry_step():
+def process_raw_telemetry_batch(fleet_raw_records: list, tick_num: int = None, source: str = "simulation") -> list:
     """
-    Advances ALL 8 machines in one synchronized simulation tick, executes batch ML prediction,
-    applies temporal smoothing per machine, and updates the Maintenance Decision Engine for the entire fleet.
+    Unified telemetry processing pipeline shared by both Simulator and MQTT ingestion layers.
+    Executes batch ML inference, temporal RUL smoothing, anomaly deviation scoring,
+    and updates the single-source-of-truth maintenance decision policy.
     """
-    fleet_raw_records = sim_engine.step()  # Returns 8 telemetry records
-    
-    # Extract feature matrix (8 rows x 8 features) for a single batch prediction call
+    if not fleet_raw_records:
+        return []
+
+    # Extract feature matrix for a single batch prediction call
     feature_batch = [
         {
             "Temperature": float(r.get("Temperature", 62.0)),
@@ -97,15 +101,15 @@ def generate_next_telemetry_step():
         }
         for r in fleet_raw_records
     ]
-    
-    # Single model batch prediction for all 8 machines
+
     raw_pred_ruls = model_service.predict_rul_batch(feature_batch)
-    
     processed_fleet_records = []
-    tick_num = sim_engine.tick
-    
+
+    if tick_num is None:
+        tick_num = (sim_state.fleet_ticks[-1]["tick"] + 1) if sim_state.fleet_ticks else 1
+
     for idx, record in enumerate(fleet_raw_records):
-        m_id = record["Machine_ID"]
+        m_id = str(record.get("Machine_ID", f"M-{idx+1:03d}"))
         temp = float(record.get("Temperature", 62.0))
         vib = float(record.get("Vibration", 0.20))
         curr = float(record.get("Motor_Current", 8.0))
@@ -117,7 +121,7 @@ def generate_next_telemetry_step():
         health = float(record.get("Machine_Health", 100.0))
         active_event = str(record.get("Active_Event", "None"))
         raw_pred_rul = raw_pred_ruls[idx]
-        
+
         sim_inst = sim_engine.machines.get(m_id)
         temp_base = getattr(sim_inst, 'temp_base', 62.0) if sim_inst else 62.0
         vib_base = getattr(sim_inst, 'vib_base', 0.20) if sim_inst else 0.20
@@ -128,7 +132,7 @@ def generate_next_telemetry_step():
         oil_base = getattr(sim_inst, 'oil_base', 50.0) if sim_inst else 50.0
         pwr_base = getattr(sim_inst, 'power_base', 25.0) if sim_inst else 25.0
         max_lifespan = getattr(sim_inst, 'max_lifespan_days', 250) if sim_inst else 250
-        
+
         t_dev = max(0.0, (temp - temp_base) / 15.0)
         v_dev = max(0.0, (vib - vib_base) / 4.0)
         c_dev = max(0.0, (curr - curr_base) / 7.2)
@@ -138,7 +142,7 @@ def generate_next_telemetry_step():
         o_dev = max(0.0, (oil_temp - oil_base) / 20.0)
         w_dev = max(0.0, (pwr - pwr_base) / 10.0)
         sensor_anomaly_score = (0.20 * t_dev + 0.20 * v_dev + 0.15 * c_dev + 0.10 * p_dev + 0.10 * r_dev + 0.10 * f_dev + 0.10 * o_dev + 0.05 * w_dev)
-        
+
         prev_rul = sim_state.prev_displayed_rul.get(m_id, None)
         val_float, displayed_rul = filter_displayed_rul(
             raw_prediction=raw_pred_rul,
@@ -146,7 +150,7 @@ def generate_next_telemetry_step():
             health=health
         )
         sim_state.prev_displayed_rul[m_id] = val_float
-        
+
         prev_lvl = sim_state.prev_status_level.get(m_id, 0)
         maint_info = get_maintenance_recommendation(
             predicted_rul=displayed_rul,
@@ -173,7 +177,7 @@ def generate_next_telemetry_step():
             power_base=pwr_base
         )
         sim_state.prev_status_level[m_id] = maint_info.get("status_level", 0)
-        
+
         record["Raw_Predicted_RUL"] = raw_pred_rul
         record["Predicted_RUL"] = displayed_rul
         record["Machine_Status"] = maint_info["maintenance_status"]
@@ -181,24 +185,53 @@ def generate_next_telemetry_step():
         record["Inspection_Priority"] = maint_info["inspection_priority"]
         record["Next_Inspection_Window"] = maint_info["next_inspection_window"]
         record["Abnormal_Indicators"] = maint_info.get("abnormal_indicators", [])
-        
+        record["Source"] = source
+
         if m_id not in sim_state.history_by_machine:
             sim_state.history_by_machine[m_id] = []
         sim_state.history_by_machine[m_id].append(record)
         if len(sim_state.history_by_machine[m_id]) > 1000:
             sim_state.history_by_machine[m_id].pop(0)
-            
+
         processed_fleet_records.append(record)
-        
-    sim_state.fleet_ticks.append({
-        "tick": tick_num,
-        "timestamp": processed_fleet_records[0]["Timestamp"],
-        "machines": processed_fleet_records
-    })
+
+    # Update fleet ticks buffer
+    if len(processed_fleet_records) >= len(sim_engine.machines) or not sim_state.fleet_ticks:
+        sim_state.fleet_ticks.append({
+            "tick": tick_num,
+            "timestamp": processed_fleet_records[0]["Timestamp"],
+            "machines": processed_fleet_records
+        })
+    else:
+        current_machines = sim_state.fleet_ticks[-1]["machines"].copy()
+        for updated_rec in processed_fleet_records:
+            found = False
+            for i, m in enumerate(current_machines):
+                if m["Machine_ID"] == updated_rec["Machine_ID"]:
+                    current_machines[i] = updated_rec
+                    found = True
+                    break
+            if not found:
+                current_machines.append(updated_rec)
+        sim_state.fleet_ticks.append({
+            "tick": tick_num,
+            "timestamp": processed_fleet_records[0]["Timestamp"],
+            "machines": current_machines
+        })
+
     if len(sim_state.fleet_ticks) > 1000:
         sim_state.fleet_ticks.pop(0)
-        
+
     return processed_fleet_records
+
+
+def generate_next_telemetry_step():
+    """
+    Advances ALL 8 machines in one synchronized simulation tick, executes batch ML prediction,
+    applies temporal smoothing per machine, and updates the Maintenance Decision Engine for the entire fleet.
+    """
+    fleet_raw_records = sim_engine.step()  # Returns 8 telemetry records
+    return process_raw_telemetry_batch(fleet_raw_records, tick_num=sim_engine.tick, source="simulation")
 
 
 # Generate initial baseline step on server startup
@@ -207,34 +240,56 @@ if not sim_state.fleet_ticks:
 
 async def simulation_clock_loop():
     """
-    Backend simulation clock loop.
+    Backend simulation clock loop for simulation mode.
     Continuously ticks the 8-machine fleet simulator according to sim_state.simulation_speed
     when sim_state.auto_play is True.
     """
     while True:
         try:
-            if sim_state.auto_play:
-                generate_next_telemetry_step()
-                sleep_time = max(0.05, float(sim_state.simulation_speed))
-                await asyncio.sleep(sleep_time)
+            if not mqtt_service.is_mqtt_mode():
+                if sim_state.auto_play:
+                    generate_next_telemetry_step()
+                    sleep_time = max(0.05, float(sim_state.simulation_speed))
+                    await asyncio.sleep(sleep_time)
+                else:
+                    await asyncio.sleep(0.2)
             else:
-                await asyncio.sleep(0.2)
+                # In MQTT mode, the background network loop receives data
+                await asyncio.sleep(1.0)
         except Exception as e:
             logger.error(f"Error in simulation_clock_loop: {e}", exc_info=True)
             await asyncio.sleep(0.5)
 
 @app.on_event("startup")
 async def startup_event():
-    asyncio.create_task(simulation_clock_loop())
+    # Wire telemetry callback for incoming MQTT messages
+    mqtt_service.set_telemetry_handler(
+        lambda records: process_raw_telemetry_batch(records, source="mqtt")
+    )
+    if mqtt_service.is_mqtt_mode():
+        logger.info("Initializing backend in MQTT Data Mode...")
+        mqtt_service.start()
+    else:
+        logger.info("Initializing backend in Simulation Data Mode...")
+        asyncio.create_task(simulation_clock_loop())
+
+@app.on_event("shutdown")
+def shutdown_event():
+    if mqtt_service.is_mqtt_mode():
+        mqtt_service.stop()
 
 @app.get("/api/status")
 def get_status():
     try:
+        mqtt_status = mqtt_service.get_status()
+        data_mode = mqtt_service.config.data_mode
         return {
             "status": "online",
+            "data_mode": data_mode,
+            "mqtt": mqtt_status,
             "fleet_size": len(sim_engine.machines),
             "machines": [cfg["machine_id"] for cfg in FleetSimulator.MACHINE_CONFIGS],
-            "data_source": "8-Machine Synchronized Fleet SCADA Simulator",
+            "data_source": "MQTT Ingestion Pipeline" if data_mode == "mqtt" else "8-Machine Synchronized Fleet SCADA Simulator",
             "model": "Random Forest Regressor (Batch Inference)",
             "current_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
@@ -313,7 +368,9 @@ def get_current(machine_id: str = None):
             "predicted_rul_days": int(selected_machine["Predicted_RUL"]),
             "alert_status": str(selected_machine["Machine_Status"]),
             "active_event": str(selected_machine.get("Active_Event", "None")),
-            "abnormal_indicators": selected_machine.get("Abnormal_Indicators", [])
+            "abnormal_indicators": selected_machine.get("Abnormal_Indicators", []),
+            "data_mode": mqtt_service.config.data_mode,
+            "mqtt_status": mqtt_service.get_status()
         }
     except Exception as e:
         logger.error(f"Error in GET /api/current: {e}", exc_info=True)

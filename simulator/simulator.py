@@ -259,14 +259,14 @@ class FleetSimulator:
     advancing simultaneously on a synchronized simulation clock tick.
     """
     MACHINE_CONFIGS = [
-        {"machine_id": "M-001", "name": "Turbine Motor Unit A1", "seed": 101, "degradation_start_day": 100, "degradation_speed": 1.00, "initial_age_days": 10},
-        {"machine_id": "M-002", "name": "Centrifugal Pump B2", "seed": 102, "degradation_start_day": 85, "degradation_speed": 1.12, "initial_age_days": 45},
-        {"machine_id": "M-003", "name": "Reciprocating Compressor C3", "seed": 103, "degradation_start_day": 120, "degradation_speed": 0.88, "initial_age_days": 85},
-        {"machine_id": "M-004", "name": "Induction Motor Drive D4", "seed": 104, "degradation_start_day": 95, "degradation_speed": 1.05, "initial_age_days": 125},
-        {"machine_id": "M-005", "name": "Hydraulic Gear Pump E5", "seed": 105, "degradation_start_day": 110, "degradation_speed": 0.95, "initial_age_days": 160},
-        {"machine_id": "M-006", "name": "Exhaust Blower Fan F6", "seed": 106, "degradation_start_day": 90, "degradation_speed": 1.02, "initial_age_days": 190},
-        {"machine_id": "M-007", "name": "Cooling Tower Motor G7", "seed": 107, "degradation_start_day": 115, "degradation_speed": 0.92, "initial_age_days": 215},
-        {"machine_id": "M-008", "name": "Heavy Duty Gearbox H8", "seed": 108, "degradation_start_day": 80, "degradation_speed": 1.18, "initial_age_days": 235},
+        {"machine_id": "M-001", "name": "Turbine Motor Unit A1", "seed": 101, "degradation_start_day": 100, "degradation_speed": 1.00, "initial_age_days": 5},
+        {"machine_id": "M-002", "name": "Centrifugal Pump B2", "seed": 102, "degradation_start_day": 85, "degradation_speed": 1.12, "initial_age_days": 20},
+        {"machine_id": "M-003", "name": "Reciprocating Compressor C3", "seed": 103, "degradation_start_day": 120, "degradation_speed": 0.88, "initial_age_days": 35},
+        {"machine_id": "M-004", "name": "Induction Motor Drive D4", "seed": 104, "degradation_start_day": 95, "degradation_speed": 1.05, "initial_age_days": 50},
+        {"machine_id": "M-005", "name": "Hydraulic Gear Pump E5", "seed": 105, "degradation_start_day": 110, "degradation_speed": 0.95, "initial_age_days": 65},
+        {"machine_id": "M-006", "name": "Exhaust Blower Fan F6", "seed": 106, "degradation_start_day": 90, "degradation_speed": 1.02, "initial_age_days": 80},
+        {"machine_id": "M-007", "name": "Cooling Tower Motor G7", "seed": 107, "degradation_start_day": 115, "degradation_speed": 0.92, "initial_age_days": 95},
+        {"machine_id": "M-008", "name": "Heavy Duty Gearbox H8", "seed": 108, "degradation_start_day": 80, "degradation_speed": 1.18, "initial_age_days": 110},
     ]
 
     def __init__(self, max_lifespan_days=250, degradation_factor=1.8):
