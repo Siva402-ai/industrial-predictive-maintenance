@@ -5,12 +5,14 @@ import os
 
 class PredictiveMaintenanceModel:
     def __init__(self, model_path="models/rf_rul_model.pkl", scaler_path="models/scaler.pkl"):
-        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        if not os.path.exists(model_path):
+        this_dir = os.path.dirname(os.path.abspath(__file__))
+        base_dir = os.path.dirname(this_dir) if os.path.basename(this_dir) == 'model' else this_dir
+        
+        if not os.path.isabs(model_path):
             alt_model = os.path.join(base_dir, model_path)
             if os.path.exists(alt_model):
                 model_path = alt_model
-        if not os.path.exists(scaler_path):
+        if not os.path.isabs(scaler_path):
             alt_scaler = os.path.join(base_dir, scaler_path)
             if os.path.exists(alt_scaler):
                 scaler_path = alt_scaler
