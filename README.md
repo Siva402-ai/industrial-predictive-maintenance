@@ -1,274 +1,284 @@
-# 🏭 Industrial Predictive Maintenance Platform
+# Industrial Predictive Maintenance & Intelligent Root Cause Analysis
 
-### Digital Twin • Machine Learning • Real-Time MQTT Telemetry • Intelligent Maintenance Decisions
+### An AI-powered industrial monitoring platform combining predictive maintenance, anomaly detection, Digital Twin simulation and persistent AI incident memory.
 
-An industrial predictive maintenance platform that monitors an eight-machine fleet, estimates Remaining Useful Life (RUL), evaluates equipment health and translates machine-learning predictions into actionable maintenance recommendations.
+An intelligent industrial monitoring and decision-support platform designed to monitor machine health, estimate Remaining Useful Life (RUL), identify abnormal operating conditions and support Root Cause Analysis through historical incident intelligence.
 
-Built using Python, FastAPI, React, Scikit-learn and MQTT, the platform combines digital twin simulation, predictive analytics and real-time industrial telemetry within a unified monitoring system.
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Python-3.10%2B-blue?logo=python" />
-  <img src="https://img.shields.io/badge/FastAPI-Backend-009688?logo=fastapi" />
-  <img src="https://img.shields.io/badge/React-Frontend-61DAFB?logo=react" />
-  <img src="https://img.shields.io/badge/MQTT-Messaging-660066" />
-  <img src="https://img.shields.io/badge/Machine_Learning-Scikit--learn-orange?logo=scikitlearn" />
-  <img src="https://img.shields.io/badge/Status-Active-success" />
-</p>
+The platform combines Machine Learning, sensor telemetry, Principal Component Analysis (PCA), MQTT-based communication, Digital Twin simulation and HINDY — a persistent AI incident memory agent.
 
 ---
 
-## 📌 Overview
+## Overview
 
-Unexpected industrial equipment failures can cause production downtime, increased maintenance costs and operational risks.
+Unexpected industrial equipment failures can result in production downtime, maintenance costs and operational inefficiencies.
 
-Traditional maintenance approaches often rely on fixed servicing schedules or reactive repairs. This project explores a predictive approach by continuously monitoring machine telemetry and estimating equipment degradation.
+Traditional monitoring systems primarily focus on detecting current abnormalities. Predictive maintenance goes further by analysing machine behaviour and estimating potential equipment degradation.
 
-The platform simulates an industrial fleet of eight machines (`M-001` to `M-008`) and provides:
+This project extends that approach by integrating predictive analytics with Root Cause Analysis.
 
-* Real-time machine health monitoring.
-* Remaining Useful Life (RUL) prediction in days.
-* Machine degradation and sensor telemetry visualization.
-* Intelligent maintenance recommendations.
-* Inspection priority and servicing schedules.
-* MQTT-based external telemetry ingestion.
-* Historical analytics and model evaluation.
+It brings together four major capabilities:
 
-The system separates predictive modelling from maintenance decision-making, allowing model predictions to be translated into actionable servicing policies.
+* **Predictive Maintenance:** Estimate machine Remaining Useful Life using machine learning.
+* **Anomaly Detection:** Identify abnormal sensor behaviour and deviations from expected operating conditions.
+* **Digital Twin Simulation:** Simulate multiple industrial machines and generate telemetry for monitoring.
+* **Intelligent RCA:** Use HINDY's persistent incident memory to retrieve historical breakdowns and support investigations.
 
----
+## Key Features
 
-## ✨ Key Features
-
-### 1. Digital Twin Simulation
-
-* Simulates eight independent industrial machines.
-* Generates temperature, vibration and motor-current telemetry.
-* Models machine degradation and operational variations.
-* Supports synchronized machine simulation.
-* Generates synthetic telemetry for development and testing.
-
-### 2. Predictive Maintenance
-
-* Random Forest regression for Remaining Useful Life estimation.
-* Sensor preprocessing and feature scaling.
-* Batch inference across the machine fleet.
-* Temporal filtering of displayed RUL predictions.
-* Machine health and degradation monitoring.
-
-### 3. Intelligent Maintenance Decision Engine
-
-Converts predicted RUL and machine health into maintenance actions.
-
-| Predicted RUL | Status                 | Maintenance Action            |
-| ------------- | ---------------------- | ----------------------------- |
-| > 700 days    | Healthy                | Continue normal operation     |
-| 400–700 days  | Monitor                | Increase monitoring frequency |
-| 150–400 days  | Preventive Maintenance | Schedule maintenance          |
-| 30–150 days   | Warning                | Perform servicing soon        |
-| < 30 days     | Critical               | Immediate intervention        |
-
-### 4. MQTT-Based Telemetry Streaming
-
-Supports external machine telemetry through an MQTT messaging architecture.
-
-* Mosquitto MQTT broker support.
-* FastAPI MQTT subscriber.
-* Configurable MQTT broker and topic.
-* Multi-machine telemetry payloads.
-* One-second interval telemetry publisher.
-* Live ingestion from another laptop over a local network.
-
-### 5. Interactive SCADA Dashboard
-
-The React frontend provides four primary views:
-
-* **Dashboard:** Live machine monitoring and sensor metrics.
-* **Analytics:** Historical trends and comparative analysis.
-* **Maintenance:** RUL predictions, servicing recommendations and inspection priorities.
-* **Evaluation:** Model diagnostics and evaluation metrics.
+| Capability                  | Description                                                                               |
+| --------------------------- | ----------------------------------------------------------------------------------------- |
+| Machine Health Monitoring   | Monitor industrial machine behaviour through sensor telemetry.                            |
+| RUL Estimation              | Estimate Remaining Useful Life using a Random Forest regression model.                    |
+| Model Benchmarking          | Compare Random Forest and LightGBM approaches.                                            |
+| PCA Analysis                | Apply Principal Component Analysis for dimensionality reduction and sensor-data analysis. |
+| Anomaly Detection           | Identify unusual sensor behaviour using anomaly analysis techniques.                      |
+| Digital Twin                | Simulate eight industrial machines and their telemetry.                                   |
+| MQTT Communication          | Stream machine telemetry using paho-mqtt and Mosquitto compatibility.                     |
+| Maintenance Decision Engine | Combine machine health, RUL and anomaly severity into maintenance recommendations.        |
+| HINDY Incident Memory       | Store historical incident knowledge and retrieve similar breakdowns.                      |
+| Root Cause Analysis         | Support engineers with historical incident context during investigations.                 |
 
 ---
 
-## 🏗️ System Architecture
+## System Architecture
 
-The platform supports two interchangeable operating modes.
+The following diagram illustrates the overall conceptual workflow of the platform.
 
-### Mode 1 – Simulation Mode
+```mermaid
+flowchart TD
+    A[Digital Twin Simulator] --> B[8 Industrial Machines]
+    B --> C[Sensor Telemetry]
+    C --> D[MQTT Publisher]
+    D --> E[Mosquitto MQTT Broker]
+    E --> F[Telemetry Ingestion]
 
-```text
-       8-Machine Digital Twin Simulator
-                    |
-                    v
-          Synchronized Telemetry
-                    |
-                    v
-          Feature Preprocessing
-                    |
-                    v
-         Random Forest RUL Model
-                    |
-                    v
-       Maintenance Decision Engine
-                    |
-                    v
-              FastAPI Backend
-                    |
-                    v
-             React Dashboard
+    F --> G[Data Processing]
+    G --> H[PCA Analysis]
+    G --> I[Anomaly Analysis]
+    G --> J[RUL Prediction]
+
+    J --> K[Random Forest Regressor]
+    K --> L[Model Benchmarking with LightGBM]
+
+    H --> M[Machine Health Assessment]
+    I --> M
+    J --> M
+
+    M --> N[Maintenance Decision Engine]
+    N --> O[Maintenance Recommendations]
+
+    N --> P[HINDY Incident Memory]
+    P --> Q[Historical Incident Retrieval]
+    Q --> R[Root Cause Analysis Support]
+
+    O --> S[Monitoring Dashboard]
+    R --> S
 ```
 
-### Mode 2 – MQTT Live Ingestion Mode
-
-```text
- External Sensor / Telemetry Publisher
-                    |
-                    v
-              MQTT Broker
-               Mosquitto
-                    |
-                    v
-          FastAPI MQTT Subscriber
-                    |
-                    v
-          Batch ML Inference
-                    |
-                    v
-       Maintenance Decision Engine
-                    |
-                    v
-             React Dashboard
-```
-
-The two modes allow the application to operate either as a standalone digital twin simulation or as a telemetry-driven monitoring platform.
+*This diagram represents the platform's functional architecture. Refer to the implementation for the exact component connections.*
 
 ---
 
-## 🧠 Machine Learning Pipeline
+## 1. Industrial Machine Monitoring
 
-The predictive maintenance pipeline follows these stages:
+The platform monitors industrial machine behaviour using sensor telemetry.
 
-```text
-      Industrial Sensor Telemetry
-                    |
-                    v
-            Feature Extraction
-                    |
-                    v
-          StandardScaler
-                    |
-                    v
-       Random Forest Regressor
-                    |
-                    v
-       Predicted RUL (Days)
-                    |
-                    v
-        Temporal RUL Filtering
-                    |
-                    v
-      Maintenance Decision Engine
-                    |
-          +---------+---------+
-          |         |         |
-          v         v         v
-       Health    Priority   Recommended
-       Status    Level       Action
+The Digital Twin Simulator represents eight machines and generates telemetry that can be ingested through the MQTT communication pipeline.
+
+The monitoring workflow supports:
+
+* Machine-level telemetry collection.
+* Sensor behaviour analysis.
+* Machine health assessment.
+* Identification of abnormal operating conditions.
+* Continuous monitoring through simulated telemetry.
+
+## 2. Predictive Maintenance & RUL Estimation
+
+Remaining Useful Life (RUL) estimation helps anticipate how much operational life a machine may have before requiring maintenance.
+
+The project uses machine learning-based regression to estimate RUL.
+
+### Model Development
+
+**Random Forest Regressor**
+
+Used as the primary RUL prediction model to estimate remaining machine life from sensor-related features.
+
+**LightGBM**
+
+Used as a benchmark model to compare predictive performance against Random Forest.
+
+The model comparison provides a basis for evaluating different regression approaches for industrial predictive maintenance.
+
+## 3. PCA-Based Sensor Analysis
+
+Principal Component Analysis (PCA) is incorporated to analyse high-dimensional industrial sensor data.
+
+Industrial machines generate multiple sensor measurements, which may contain correlated information.
+
+PCA helps transform these measurements into a smaller set of principal components while retaining important patterns in the data.
+
+Its role includes:
+
+* Dimensionality reduction.
+* Analysis of correlated sensor variables.
+* Identification of dominant patterns in sensor behaviour.
+* Supporting the analysis of abnormal machine operating conditions.
+
+PCA complements the predictive maintenance and anomaly analysis pipeline.
+
+## 4. Anomaly Detection
+
+Anomaly analysis helps identify deviations from expected machine behaviour.
+
+The platform considers sensor deviations and machine operating conditions to identify potentially abnormal states.
+
+These observations contribute to the overall machine health assessment.
+
+Anomaly severity is also considered by the maintenance decision engine when generating recommendations.
+
+## 5. Digital Twin & MQTT Telemetry
+
+The Digital Twin Simulator represents eight industrial machines and simulates their behaviour.
+
+The telemetry pipeline uses MQTT for communication between the simulator and the monitoring system.
+
+### Communication Workflow
+
+```mermaid
+flowchart LR
+    A[Digital Twin Simulator] --> B[paho-mqtt Publisher]
+    B --> C[Mosquitto Broker]
+    C --> D[Telemetry Consumer]
+    D --> E[Processing Pipeline]
+    E --> F[Machine Monitoring]
 ```
 
-### Model Details
+**Technologies:**
 
-| Component       | Implementation                          |
-| --------------- | --------------------------------------- |
-| Prediction Task | Remaining Useful Life Regression        |
-| Primary Model   | Random Forest Regressor                 |
-| Preprocessing   | StandardScaler                          |
-| Input Features  | Temperature, Vibration, Motor Current   |
-| Output          | Predicted Remaining Useful Life in days |
-| Decision Layer  | Rule-based Maintenance Engine           |
+* paho-mqtt
+* MQTT
+* Mosquitto
 
-The system uses a single RUL prediction model and a separate rule-based decision engine to avoid redundant predictions and provide deterministic maintenance recommendations.
+This architecture provides a communication layer for streaming simulated industrial telemetry into the monitoring platform.
+
+## 6. Maintenance Decision Engine
+
+Predictive outputs become more useful when translated into actionable maintenance decisions.
+
+The decision engine combines three important inputs:
+
+1. **Machine Health:** Overall machine operating condition.
+2. **Remaining Useful Life:** Estimated remaining operational life.
+3. **Anomaly Severity:** Degree of abnormal sensor behaviour.
+
+These inputs are considered together to generate maintenance recommendations.
+
+This connects machine monitoring and predictive analytics with practical maintenance decision support.
 
 ---
 
-## 📡 MQTT Integration
+## 7. HINDY — Persistent AI Incident Memory
 
-The project supports real-time telemetry ingestion through MQTT.
+### From detecting failures to remembering what engineers learned.
 
-**Broker:** Eclipse Mosquitto
-**Default Port:** `1883`
-**Default Topic:** `factory/telemetry`
+Conventional monitoring systems help engineers understand what is happening now.
 
-### Telemetry Flow
+However, historical investigation knowledge can be difficult to reuse when similar failures occur again.
 
-```text
-Laptop 1                         Laptop 2
------------                      -----------
-MQTT Publisher                   Mosquitto Broker
-      |                                 |
-      |                                 v
-      +---------- MQTT ----------> FastAPI Subscriber
-                                        |
-                                        v
-                                  ML Inference
-                                        |
-                                        v
-                                  React Dashboard
+**HINDY** addresses this problem through persistent AI incident memory.
+
+It is integrated into the Industrial Predictive Maintenance and RCA platform to preserve historical incident knowledge and retrieve relevant past breakdowns during new investigations.
+
+### Core Capabilities
+
+* **Incident Memory:** Store historical incidents and investigation knowledge.
+* **Historical Retrieval:** Retrieve similar past breakdowns when a new incident occurs.
+* **Contextual Investigation:** Provide relevant historical context to support Root Cause Analysis.
+* **Knowledge Reuse:** Help engineers reuse previously learned troubleshooting information.
+
+### HINDY in the RCA Workflow
+
+```mermaid
+flowchart TD
+    A[New Machine Incident] --> B[Incident Context]
+    B --> C[HINDY]
+    C --> D[Historical Incident Memory]
+    D --> E[Similar Incident Retrieval]
+    E --> F[Relevant Historical Context]
+    F --> G[RCA Investigation]
+    G --> H[Engineer Review]
 ```
 
-### Example Telemetry Payload
+HINDY complements predictive maintenance by connecting current machine behaviour with historical incident knowledge.
 
-```json
-{
-  "tick": 1,
-  "timestamp": "2026-10-04 23:30:00",
-  "machines": [
-    {
-      "Machine_ID": "M-001",
-      "Machine_Name": "Turbine Motor Unit A1",
-      "Temperature": 62.45,
-      "Vibration": 0.21,
-      "Motor_Current": 8.05,
-      "Pressure": 5.02,
-      "RPM": 1749.8,
-      "Flow_Rate": 155.4,
-      "Machine_Health": 98.5,
-      "Remaining_Useful_Life_Days": 250
-    }
-  ]
-}
-```
+It acts as an investigation-support system rather than automatically declaring a confirmed root cause.
 
 ---
 
-## 🛠️ Technology Stack
+## End-to-End Workflow
 
-| Category         | Technologies                |
-| ---------------- | --------------------------- |
-| Programming      | Python, JavaScript          |
-| Backend          | FastAPI, Uvicorn, Pydantic  |
-| Frontend         | React.js, Vite              |
-| Machine Learning | Scikit-learn, Random Forest |
-| Data Processing  | NumPy, Pandas               |
-| Preprocessing    | StandardScaler              |
-| Messaging        | MQTT, Eclipse Mosquitto     |
-| Visualization    | Plotly.js, React Plotly     |
-| UI               | Tailwind CSS, Lucide React  |
-| Version Control  | Git, GitHub                 |
+The platform brings its components together through the following workflow:
+
+1. **Simulation:** The Digital Twin Simulator generates telemetry for eight industrial machines.
+2. **Ingestion:** MQTT transports the telemetry through a Mosquitto-compatible broker.
+3. **Processing:** Sensor measurements are processed for downstream analysis.
+4. **Dimensionality Reduction:** PCA supports the analysis of industrial sensor data.
+5. **Prediction:** Random Forest estimates Remaining Useful Life, with LightGBM used for benchmarking.
+6. **Anomaly Analysis:** Sensor deviations contribute to abnormal-condition assessment.
+7. **Decision Support:** The decision engine combines machine health, RUL and anomaly severity.
+8. **Incident Investigation:** HINDY retrieves similar historical incidents to support RCA.
 
 ---
 
-## 🚀 Getting Started
+## Technology Stack
+
+| Category             | Technologies                                 |
+| -------------------- | -------------------------------------------- |
+| Programming Language | Python                                       |
+| Backend              | FastAPI                                      |
+| Frontend             | React                                        |
+| Machine Learning     | Random Forest, LightGBM                      |
+| Data Analysis        | PCA                                          |
+| Anomaly Analysis     | Isolation Forest / sensor-deviation analysis |
+| Communication        | MQTT, paho-mqtt, Mosquitto                   |
+| Simulation           | Digital Twin                                 |
+| AI Incident Memory   | HINDY                                        |
+
+---
+
+## Application Screenshots
+
+Add actual screenshots of the application here.
+
+Recommended screenshots:
+
+| Screenshot             | What it should demonstrate                         |
+| ---------------------- | -------------------------------------------------- |
+| Monitoring Dashboard   | Overall machine health and monitoring interface    |
+| Machine Details        | Individual machine sensor information              |
+| Digital Twin Simulator | Eight-machine simulation                           |
+| Predictive Maintenance | RUL predictions and model outputs                  |
+| Anomaly Analysis       | Abnormal sensor behaviour                          |
+| RCA Interface          | HINDY incident retrieval and investigation context |
+
+Store the screenshots in a dedicated documentation or assets directory and reference their actual paths here.
+
+---
+
+## Getting Started
+
+The project uses Python, FastAPI, React and MQTT-based telemetry communication.
 
 ### Prerequisites
 
-Install the following:
+* Python
+* Node.js and npm
+* MQTT broker compatible with Mosquitto
+* Git
 
-* Python 3.10 or later.
-* Node.js and npm.
-* Git.
-* Mosquitto MQTT Broker (required for MQTT mode).
-
-### 1. Clone the Repository
+### Clone the Repository
 
 ```bash
 git clone https://github.com/Siva402-ai/industrial-predictive-maintenance.git
@@ -276,180 +286,40 @@ git clone https://github.com/Siva402-ai/industrial-predictive-maintenance.git
 cd industrial-predictive-maintenance
 ```
 
-### 2. Install Backend Dependencies
+### Installation
 
-```bash
-pip install -r requirements.txt
-```
+Install the dependencies using the project's existing backend and frontend dependency files.
 
-### 3. Install Frontend Dependencies
+Configure the required environment variables and MQTT broker settings according to the project configuration.
 
-```bash
-cd frontend
-npm install
-cd ..
-```
+Start the backend, frontend, MQTT broker and simulator using the commands defined in the repository.
+
+*Refer to the actual project configuration for exact startup commands and ports.*
 
 ---
 
-## ▶️ Running the Application
+## Engineering Highlights
 
-### Option A – Simulation Mode
+* Developed an integrated predictive maintenance workflow using machine learning.
+* Applied PCA for dimensionality reduction and industrial sensor analysis.
+* Compared Random Forest and LightGBM for RUL prediction.
+* Developed an eight-machine Digital Twin Simulator.
+* Integrated MQTT telemetry communication with Mosquitto compatibility.
+* Combined machine health, RUL and anomaly severity into maintenance recommendations.
+* Integrated HINDY persistent incident memory to support historical incident retrieval and Root Cause Analysis.
 
-**Terminal 1: Start FastAPI Backend**
+## Future Scope
 
-```bash
-python -m uvicorn main:app --host 127.0.0.1 --port 8000
-```
-
-**Terminal 2: Start React Frontend**
-
-```bash
-cd frontend
-npm run dev
-```
-
-Open the frontend using the local URL displayed by Vite.
-
-Backend API documentation:
-
-```text
-http://127.0.0.1:8000/docs
-```
-
-System status:
-
-```text
-http://127.0.0.1:8000/api/status
-```
-
-### Option B – MQTT Live Ingestion Mode
-
-**Step 1: Start Mosquitto**
-
-```bash
-mosquitto -v -p 1883
-```
-
-**Step 2: Start FastAPI in MQTT Mode**
-
-Windows PowerShell:
-
-```powershell
-$env:DATA_MODE="mqtt"
-$env:MQTT_BROKER_HOST="localhost"
-$env:MQTT_TOPIC="factory/telemetry"
-
-python -m uvicorn main:app --host 127.0.0.1 --port 8000
-```
-
-Linux / macOS:
-
-```bash
-DATA_MODE=mqtt MQTT_BROKER_HOST=localhost python -m uvicorn main:app --host 127.0.0.1 --port 8000
-```
-
-**Step 3: Start React Frontend**
-
-```bash
-cd frontend
-npm run dev
-```
-
-**Step 4: Start the Telemetry Publisher**
-
-Open another terminal in the project root:
-
-```bash
-python mqtt_publisher.py --broker localhost --port 1883 --topic factory/telemetry --interval 1.0
-```
-
-The publisher streams simulated telemetry for the eight-machine fleet at one-second intervals.
+* Improve RUL prediction through additional model experimentation.
+* Extend sensor anomaly analysis and multivariate monitoring.
+* Expand historical incident knowledge and retrieval capabilities.
+* Improve explainability of maintenance recommendations.
+* Integrate additional industrial data sources and machine configurations.
 
 ---
 
-## 📂 Project Structure
+## Project Vision
 
-```text
-industrial-predictive-maintenance/
-│
-├── data/
-├── datasets/
-│
-├── frontend/
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── services/
-│   ├── package.json
-│   └── vite.config.js
-│
-├── model/
-│   ├── predict.py
-│   ├── maintenance_engine.py
-│   └── train_model.py
-│
-├── models/
-├── preprocessing/
-├── simulator/
-├── tests/
-├── utils/
-│
-├── main.py
-├── mqtt_publisher.py
-├── mqtt_service.py
-├── predict.py
-├── train_gb_model.py
-├── requirements.txt
-│
-├── PROJECT_DOCUMENTATION.md
-├── PROJECT_OVERVIEW.md
-└── README.md
-```
+**Predictive maintenance tells us when a machine may fail. Intelligent Root Cause Analysis helps us understand what may have happened and what was learned before.**
 
----
-
-## 📊 Model Evaluation
-
-The project includes a dedicated model evaluation interface to examine prediction performance and model diagnostics.
-
-The documented model evaluation includes:
-
-* Regression evaluation metrics.
-* Predicted versus actual RUL analysis.
-* Residual distribution visualization.
-* Feature-related model diagnostics.
-
-Evaluation results should be interpreted in the context of the synthetic simulation and training data. They should not be treated as verified industrial deployment performance.
-
----
-
-## 🔮 Future Enhancements
-
-* Integration with physical industrial IoT sensors.
-* Persistent time-series database storage.
-* WebSocket-based live dashboard updates.
-* Advanced anomaly detection.
-* Expanded predictive modelling experiments.
-* Cloud deployment and infrastructure monitoring.
-* Role-based access control.
-* Automated maintenance scheduling.
-
----
-
-## 👨‍💻 Author
-
-**Siva Balaji B K**
-
-Artificial Intelligence and Data Science
-SRM Easwari Engineering College
-
-GitHub: [Siva402-ai](https://github.com/Siva402-ai)
-
----
-
-## ⭐ Project
-
-If you find this project interesting, consider giving the repository a star!
-
-**Repository:** [Industrial Predictive Maintenance](https://github.com/Siva402-ai/industrial-predictive-maintenance)
+By combining machine learning, industrial telemetry, Digital Twin simulation and persistent AI incident memory, this project explores a more intelligent approach to industrial maintenance and operational decision support.
