@@ -18,6 +18,7 @@ const TopBar = ({ activeTab, setActiveTab, backendStatus, statusData, currentDat
 
   const navItems = [
     { id: 'dashboard', label: 'Live Monitoring' },
+    { id: 'digitaltwin', label: '3D Digital Twin' },
     { id: 'analytics', label: 'Fleet Analytics' },
     { id: 'maintenance', label: 'Maintenance Queue' },
     { id: 'evaluation', label: 'Model Evaluation' },

@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard';
 import Analytics from './pages/Analytics';
 import Maintenance from './pages/Maintenance';
 import Evaluation from './pages/Evaluation';
+import DigitalTwin from './pages/DigitalTwin';
 import {
   getStatus,
   getCurrentData,
@@ -16,7 +17,7 @@ import {
 } from './services/api';
 
 function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab')) || 'dashboard');
   const [selectedMachineId, setSelectedMachineId] = useState('M-001');
   const [backendStatus, setBackendStatus] = useState(true);
   const [statusData, setStatusData] = useState(null);
@@ -184,6 +185,14 @@ function App() {
                 setSelectedMachineId(mId);
                 setActiveTab('dashboard');
               }}
+            />
+          )}
+          {activeTab === 'digitaltwin' && (
+            <DigitalTwin
+              selectedMachineId={selectedMachineId}
+              onSelectMachine={setSelectedMachineId}
+              currentData={currentData}
+              backendStatus={backendStatus}
             />
           )}
           {activeTab === 'evaluation' && <Evaluation modelData={modelData} />}

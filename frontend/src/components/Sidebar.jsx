@@ -4,6 +4,7 @@ import {
   LineChart,
   Cpu,
   Wrench,
+  Box,
   Play,
   Pause,
   SkipForward,
@@ -60,6 +61,22 @@ const Sidebar = ({
             >
               <LayoutDashboard className="w-4 h-4 text-blue-600" />
               <span>Live Monitoring</span>
+            </button>
+            <button
+              onClick={() => setActiveTab('digitaltwin')}
+              className={`w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                activeTab === 'digitaltwin'
+                  ? 'bg-blue-50 text-blue-700 border border-blue-200 shadow-xs'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+              }`}
+            >
+              <Box className="w-4 h-4 text-cyan-600" />
+              <div className="flex items-center justify-between flex-1">
+                <span>3D Digital Twin</span>
+                <span className="bg-cyan-100 text-cyan-800 text-[9px] font-bold px-1.5 py-0.2 rounded border border-cyan-300">
+                  3D
+                </span>
+              </div>
             </button>
             <button
               onClick={() => setActiveTab('analytics')}
